@@ -84,7 +84,7 @@ class DatabaseHelper {
     return digest.toString();
   }
 
-  Future<bool> signUp(String email, String password) async {
+  Future<bool> signUp(String email, String password, {String? username}) async {
     print("Memproses pendaftaran");
     final db = await instance.database;
     final hashedPassword = _hashPassword(password);
@@ -94,7 +94,7 @@ class DatabaseHelper {
         {
           'email': email,
           'password_hash': hashedPassword,
-          'username': 'Sahabat',
+          'username': username ?? 'Sahabat',
         },
         conflictAlgorithm: ConflictAlgorithm.fail, // Gagal jika email sudah ada
       );
@@ -149,5 +149,47 @@ class DatabaseHelper {
       return maps.first['value'];
     }
     return null;
+  }
+
+  // Get user by email
+  Future<Map<String, dynamic>?> getUserByEmail(String email) async {
+    final db = await instance.database;
+    final result = await db.query(
+      usersTable,
+      where: 'email = ?',
+      whereArgs: [email],
+    );
+    return result.isNotEmpty ? result.first : null;
+  }
+
+  // Update user profile
+  Future<bool> updateUserProfile(int userId, String username, String email) async {
+    final db = await instance.database;
+    try {
+      final count = await db.update(
+        usersTable,
+        {
+          'username': username,
+          'email': email,
+        },
+        where: 'id = ?',
+        whereArgs: [userId],
+      );
+      return count > 0;
+    } catch (e) {
+      print('Error updating user profile: $e');
+      return false;
+    }
+  }
+
+  // Get user by ID
+  Future<Map<String, dynamic>?> getUserById(int userId) async {
+    final db = await instance.database;
+    final result = await db.query(
+      usersTable,
+      where: 'id = ?',
+      whereArgs: [userId],
+    );
+    return result.isNotEmpty ? result.first : null;
   }
 }

@@ -1,12 +1,11 @@
-import 'package:ammaplay/screens/shared_preferences.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../database_helper.dart';
 import '../providers/settings_provider.dart';
+import '../providers/user_provider.dart';
 import '../models/settings.dart';
 import '../router/app_router.dart';
-import 'dart:developer' as developer;
+import 'edit_profile_screen.dart';
 
 class SettingsScreenMinimalist extends ConsumerStatefulWidget {
   const SettingsScreenMinimalist({super.key});
@@ -18,34 +17,6 @@ class SettingsScreenMinimalist extends ConsumerStatefulWidget {
 
 class _SettingsScreenMinimalistState
     extends ConsumerState<SettingsScreenMinimalist> {
-  String? userEmail;
-  String? userUsername;
-
-  @override
-  @override
-  void initState() {
-    super.initState();
-    _loadUserInfo();
-  }
-
-  Future<void> _loadUserInfo() async {
-    final isLoggedIn = await SharedPreferencesHelper.getLoginStatus();
-    developer.log(
-      "Is user logged in? $isLoggedIn",
-      name: 'SettingsScreenMinimalist',
-    );
-    if (isLoggedIn) {
-      final dbHelper = DatabaseHelper.instance;
-      final db = await dbHelper.database;
-      final users = await db.query(DatabaseHelper.usersTable);
-      if (users.isNotEmpty) {
-        setState(() {
-          userEmail = users.first['email'] as String?;
-          userUsername = users.first['username'] as String?;
-        });
-      }
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -120,7 +91,10 @@ class _SettingsScreenMinimalistState
   }
 
   Widget _buildAccountSection(TextTheme textTheme) {
-    final isLoggedIn = userEmail != null && userUsername != null;
+    final userState = ref.watch(userProvider);
+    final currentUser = userState.user;
+    final isLoggedIn = userState.isLoggedIn;
+    
     return Card(
       elevation: 0.5,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -137,20 +111,41 @@ class _SettingsScreenMinimalistState
               ),
             ),
             const SizedBox(height: 16),
-            if (isLoggedIn) ...[
+            if (isLoggedIn && currentUser != null) ...[
               ListTile(
                 leading: const Icon(Icons.person, color: Colors.blue),
-                title: Text(userUsername ?? '', style: textTheme.bodyLarge),
-                subtitle: Text(userEmail ?? '', style: textTheme.bodyMedium),
+                title: Text(currentUser.username, style: textTheme.bodyLarge),
+                subtitle: Text(currentUser.email, style: textTheme.bodyMedium),
+                trailing: IconButton(
+                  icon: const Icon(Icons.edit, color: Colors.blue),
+                  onPressed: _editProfile,
+                ),
               ),
               const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: _logout,
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-                child: const Text(
-                  "Logout",
-                  style: TextStyle(color: Colors.white),
-                ),
+              Row(
+                children: [
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: _editProfile,
+                      style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
+                      child: const Text(
+                        "Edit Profil",
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: _logout,
+                      style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                      child: const Text(
+                        "Logout",
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ] else ...[
               Row(
@@ -182,12 +177,17 @@ class _SettingsScreenMinimalistState
   }
 
   Future<void> _logout() async {
-    await SharedPreferencesHelper.setLoginStatus(false);
-    setState(() {
-      userEmail = null;
-      userUsername = null;
-    });
-    developer.log("User logged out", name: 'SettingsScreenMinimalist');
+    final userNotifier = ref.read(userProvider.notifier);
+    await userNotifier.logout();
+    print("User logged out");
+  }
+
+  void _editProfile() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => const EditProfileScreen(),
+      ),
+    );
   }
 
   Widget _buildNotificationToggle(TextTheme textTheme, AppSettings settings) {

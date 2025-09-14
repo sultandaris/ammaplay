@@ -1,15 +1,16 @@
-import 'package:ammaplay/screens/shared_preferences.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'database_helper.dart';
+import 'providers/user_provider.dart';
 
-class LoginScreen extends StatefulWidget {
+class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  ConsumerState<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -20,14 +21,15 @@ class _LoginScreenState extends State<LoginScreen> {
       final email = _emailController.text;
       final password = _passwordController.text;
 
-      final success = await dbHelper.login(email, password);
+      // Use user provider for login
+      final userNotifier = ref.read(userProvider.notifier);
+      final success = await userNotifier.login(email, password);
 
       if (mounted) {
         if (success) {
           ScaffoldMessenger.of(
             context,
           ).showSnackBar(const SnackBar(content: Text('Login berhasil!.')));
-          SharedPreferencesHelper.setLoginStatus(true);
           Navigator.of(context).pop();
         } else {
           ScaffoldMessenger.of(
