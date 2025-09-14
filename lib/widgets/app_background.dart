@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class AppBackground extends StatelessWidget {
-  const AppBackground({Key? key}) : super(key: key);
+  const AppBackground({super.key});
 
   @override
   Widget build(BuildContext context) {

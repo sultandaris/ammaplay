@@ -200,7 +200,7 @@ class _SettingsScreenMinimalistState
               .read(settingsProvider.notifier)
               .updateNotifications(value ? 'on' : 'off');
         },
-        activeColor: Colors.blue,
+        activeThumbColor: Colors.blue,
       ),
     );
   }
@@ -263,9 +263,9 @@ class _SettingsScreenMinimalistState
             value: fontValue,
             onChanged: (value) {
               String newFontSize = 'medium';
-              if (value < 0.6)
+              if (value < 0.6) {
                 newFontSize = 'small';
-              else if (value > 0.85)
+              } else if (value > 0.85)
                 newFontSize = 'large';
               ref.read(settingsProvider.notifier).updateFontSize(newFontSize);
             },

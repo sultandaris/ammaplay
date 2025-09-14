@@ -6,7 +6,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import '/hafalan_surat.dart';
 
 class MainMenuScreen extends StatefulWidget {
-  const MainMenuScreen({Key? key}) : super(key: key);
+  const MainMenuScreen({super.key});
 
   @override
   State<MainMenuScreen> createState() => _MainMenuScreenState();
