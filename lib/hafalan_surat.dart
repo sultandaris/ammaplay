@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'database_helper.dart'; // <-- 1. IMPOR DATABASE HELPER
+import 'aksi_surat.dart'; // <-- 2. IMPOR SURAH ACTION SCREEN
 
 class SurahInfo {
   final String name;
@@ -13,11 +15,8 @@ class SurahInfo {
   });
 }
 
-final List<SurahInfo> level1Surahs = [
-  SurahInfo(name: 'An-Nas', isLocked: false, isCompleted: true),
-  SurahInfo(name: 'Al-Falaq'),
-  SurahInfo(name: 'Al-Ikhlas'),
-];
+// Data statis ini tidak akan kita gunakan lagi, dihapus atau dikomentari
+// final List<SurahInfo> level1Surahs = [ ... ];
 
 class PilihSuratScreen extends StatefulWidget {
   const PilihSuratScreen({super.key});
@@ -27,6 +26,47 @@ class PilihSuratScreen extends StatefulWidget {
 }
 
 class _PilihSuratScreenState extends State<PilihSuratScreen> {
+  // --- 2. PERUBAHAN UTAMA DIMULAI DI SINI ---
+  late Future<List<SurahInfo>> _surahsFuture;
+  final dbHelper = DatabaseHelper.instance;
+
+  @override
+  void initState() {
+    super.initState();
+    // Panggil fungsi untuk memuat data dari DB saat screen diinisialisasi
+    _surahsFuture = _loadSurahsFromDB();
+  }
+
+  // Fungsi untuk mengambil data dari database dan mengubahnya menjadi List<SurahInfo>
+  Future<List<SurahInfo>> _loadSurahsFromDB() async {
+    // Panggil query dari database helper
+    final List<Map<String, dynamic>> surahMaps = await dbHelper.querySemuaSurah();
+
+    // Jika tidak ada data di DB, kembalikan list kosong
+    if (surahMaps.isEmpty) {
+      return [];
+    }
+
+    // Ubah (map) setiap item dari database menjadi objek SurahInfo
+    return surahMaps.asMap().entries.map((entry) {
+      int index = entry.key;
+      Map<String, dynamic> surahData = entry.value;
+      
+      // Logika sementara untuk status terkunci dan selesai
+      // Dalam aplikasi nyata, status ini harus disimpan di database (misal: di tabel user_progress)
+      bool isLocked = index != 0; // Hanya surat pertama (An-Naas) yang terbuka
+      bool isCompleted = index == 0; // Anggap surat pertama sudah selesai
+
+      return SurahInfo(
+        name: surahData['nama'], // Ambil 'nama' dari database
+        isLocked: isLocked,
+        isCompleted: isCompleted,
+      );
+    }).toList();
+  }
+  // --- AKHIR DARI PERUBAHAN LOGIKA DATA ---
+
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -57,7 +97,35 @@ class _PilihSuratScreenState extends State<PilihSuratScreen> {
                           const SizedBox(height: 20),
                           _LevelBanner(level: 1, isSpecial: true),
                           const SizedBox(height: 16),
-                          _SurahGrid(surahs: level1Surahs),
+                          
+                          // --- 3. GUNAKAN FUTUREBUILDER UNTUK MENAMPILKAN GRID ---
+                          FutureBuilder<List<SurahInfo>>(
+                            future: _surahsFuture,
+                            builder: (context, snapshot) {
+                              // Tampilkan loading indicator saat data sedang dimuat
+                              if (snapshot.connectionState == ConnectionState.waiting) {
+                                return const Center(
+                                  child: Padding(
+                                    padding: EdgeInsets.all(50.0),
+                                    child: CircularProgressIndicator(color: Colors.white),
+                                  ),
+                                );
+                              }
+                              // Tampilkan pesan error jika terjadi kesalahan
+                              else if (snapshot.hasError) {
+                                return Center(child: Text('Error: ${snapshot.error}', style: TextStyle(color: Colors.white)));
+                              }
+                              // Jika data berhasil dimuat dan tidak kosong
+                              else if (snapshot.hasData && snapshot.data!.isNotEmpty) {
+                                final surahs = snapshot.data!;
+                                return _SurahGrid(surahs: surahs);
+                              }
+                              // Jika data kosong atau tidak ada
+                              else {
+                                return const Center(child: Text('Tidak ada surat ditemukan di database.', style: TextStyle(color: Colors.white)));
+                              }
+                            },
+                          ),
                           const SizedBox(height: 24),
                         ],
                       ),
@@ -71,7 +139,8 @@ class _PilihSuratScreenState extends State<PilihSuratScreen> {
       ),
     );
   }
-
+  
+  // Widget _buildCustomAppBar tidak berubah
   Widget _buildCustomAppBar(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 10.0),
@@ -97,7 +166,6 @@ class _PilihSuratScreenState extends State<PilihSuratScreen> {
               ),
             ),
           ),
-          // Judul
           const Text(
             'Pilih Surat',
             style: TextStyle(
@@ -113,7 +181,6 @@ class _PilihSuratScreenState extends State<PilihSuratScreen> {
               ],
             ),
           ),
-          // Logo Kanan
           SvgPicture.asset(
             'assets/amma_play_logo.svg',
             height: 40,
@@ -125,7 +192,9 @@ class _PilihSuratScreenState extends State<PilihSuratScreen> {
   }
 }
 
+// Widget _LevelBanner dan _SurahGrid tidak perlu diubah sama sekali
 class _LevelBanner extends StatelessWidget {
+  // ... (kode sama seperti sebelumnya) ...
   final int level;
   final bool isSpecial;
 
@@ -135,7 +204,6 @@ class _LevelBanner extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        // Badge Nomor
         Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
@@ -155,7 +223,6 @@ class _LevelBanner extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 10),
-        // Banner Nama Level
         Expanded(
           child: Container(
             padding: const EdgeInsets.symmetric(vertical: 16),
@@ -181,8 +248,8 @@ class _LevelBanner extends StatelessWidget {
   }
 }
 
-// Widget untuk grid yang menampilkan kartu-kartu surat
 class _SurahGrid extends StatelessWidget {
+  // ... (kode sama seperti sebelumnya) ...
   final List<SurahInfo> surahs;
 
   const _SurahGrid({required this.surahs});
@@ -206,8 +273,6 @@ class _SurahGrid extends StatelessWidget {
     );
   }
 }
-
-// Widget untuk satu kartu surat
 class _SurahCard extends StatelessWidget {
   final SurahInfo surah;
 
@@ -215,7 +280,7 @@ class _SurahCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Tampilan Kartu Terkunci
+    // Tampilan Kartu Terkunci (tidak bisa di-klik)
     if (surah.isLocked) {
       return Container(
         decoration: BoxDecoration(
@@ -231,45 +296,63 @@ class _SurahCard extends StatelessWidget {
       );
     }
 
-    // Tampilan Kartu Terbuka
-    return Container(
-      decoration: BoxDecoration(
-        color: const Color(0xFFF9D463), // Warna dasar kartu terbuka
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFD4A23F), width: 4),
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            'Surat',
-            style: TextStyle(
-              color: const Color(0xFF6B4F1A).withOpacity(0.8),
-              fontSize: 14,
+    // Tampilan Kartu Terbuka (bisa di-klik)
+    return Card(
+      elevation: 4,
+      color: Colors.transparent, // Buat Card transparan
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(20), // Samakan radius untuk efek ripple
+        onTap: () {
+          // Aksi ketika kartu di-tap
+          print('Surat ${surah.name} ditekan!');
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => SurahActionScreen(surah: surah),
             ),
+          );
+        },
+        child: Ink(
+          decoration: BoxDecoration(
+            color: const Color(0xFFF9D463), // Warna dasar kartu terbuka
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: const Color(0xFFD4A23F), width: 4),
           ),
-          Text(
-            surah.name,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: Color(0xFF6B4F1A),
-              fontWeight: FontWeight.bold,
-              fontSize: 18,
-            ),
-          ),
-          if (surah.isCompleted)
-            const Padding(
-              padding: EdgeInsets.only(top: 4.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.star_rounded, color: Color(0xFF6B4F1A), size: 18),
-                  Icon(Icons.star_rounded, color: Color(0xFF6B4F1A), size: 18),
-                  Icon(Icons.star_rounded, color: Color(0xFF6B4F1A), size: 18),
-                ],
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                'Surat',
+                style: TextStyle(
+                  color: const Color(0xFF6B4F1A).withOpacity(0.8),
+                  fontSize: 14,
+                ),
               ),
-            ),
-        ],
+              Text(
+                surah.name,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  color: Color(0xFF6B4F1A),
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                ),
+              ),
+              if (surah.isCompleted)
+                const Padding(
+                  padding: EdgeInsets.only(top: 4.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.star_rounded, color: Color(0xFF6B4F1A), size: 18),
+                      Icon(Icons.star_rounded, color: Color(0xFF6B4F1A), size: 18),
+                      Icon(Icons.star_rounded, color: Color(0xFF6B4F1A), size: 18),
+                    ],
+                  ),
+                ),
+            ],
+          ),
+        ),
       ),
     );
   }

@@ -2,11 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'router/app_router.dart';
 import 'screens/shared_preferences.dart';
+import 'database_helper.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final isLoggedIn = await SharedPreferencesHelper.getLoginStatus();
-
+  DatabaseHelper.instance.deleteDatabaseFile();
   runApp(ProviderScope(child: MyApp(isLoggedIn: isLoggedIn)));
 }
 
