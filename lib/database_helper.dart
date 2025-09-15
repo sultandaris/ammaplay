@@ -39,7 +39,6 @@ class DatabaseHelper {
   }
 
   Future _onCreate(Database db, int version) async {
-    // Tabel yang sudah ada (settings)
     await db.execute('''
           CREATE TABLE $settingsTable (
             key TEXT PRIMARY KEY,
@@ -47,7 +46,6 @@ class DatabaseHelper {
           )
           ''');
 
-    // Tabel yang sudah ada (users)
     await db.execute('''
           CREATE TABLE $usersTable (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -57,7 +55,6 @@ class DatabaseHelper {
           )
           ''');
 
-    // --- BARU --- Tabel surah (disesuaikan dengan skema Anda)
     await db.execute('''
         CREATE TABLE $surahTable (
         surat_id INTEGER PRIMARY KEY,
@@ -68,21 +65,20 @@ class DatabaseHelper {
         ''');
     developer.log("Tabel '$surahTable' dibuat.");
 
-    // --- BARU --- Tabel ayat (disesuaikan dengan skema Anda)
     await db.execute('''
-      CREATE TABLE $ayatTable (
-        ayat_id INTEGER PRIMARY KEY AUTOINCREMENT,
-        surat_id INTEGER NOT NULL,
-        nomor INTEGER NOT NULL,
-        teks_arab TEXT NOT NULL,
-        teks_latin TEXT NOT NULL,
-        teks_indonesia TEXT NOT NULL,
-        FOREIGN KEY(surat_id) REFERENCES surat(surat_id)
+    CREATE TABLE $ayatTable (
+      ayat_id INTEGER PRIMARY KEY AUTOINCREMENT, -- CUKUP TAMBAHKAN AUTOINCREMENT
+      surat_id INTEGER NOT NULL,
+      nomor INTEGER NOT NULL,
+      teks_arab TEXT NOT NULL,
+      teks_latin TEXT NOT NULL,
+      teks_indonesia TEXT NOT NULL,
+      audio_url TEXT NOT NULL, 
+      FOREIGN KEY(surat_id) REFERENCES surat(surat_id)
       )
       ''');
     developer.log("Tabel '$ayatTable' dibuat.");
 
-    // Insert data awal untuk settings
     await db.execute('''
       INSERT INTO $settingsTable (key, value) VALUES
       ('sound', 'on'),
@@ -108,13 +104,17 @@ class DatabaseHelper {
 
     // List data ayat untuk An-Naas dengan data lengkap
     List<Ayat> ayatAnNaas = [
-        Ayat(ayatId: 6231, suratId: idSurah, nomor: 1, teksArab: "قُلْ اَعُوْذُ بِرَبِّ النَّاسِۙ", teksLatin: "Qul a'ụżu birabbin-nās", teksIndonesia: "Katakanlah, “Aku berlindung kepada Tuhannya manusia,"),
-        Ayat(ayatId: 6232, suratId: idSurah, nomor: 2, teksArab: "مَلِكِ النَّاسِۙ", teksLatin: "Malikin-nās", teksIndonesia: "Raja manusia,"),
-        Ayat(ayatId: 6233, suratId: idSurah, nomor: 3, teksArab: "اِلٰهِ النَّاسِۙ", teksLatin: "Ilāhin-nās", teksIndonesia: "sembahan manusia,"),
-        Ayat(ayatId: 6234, suratId: idSurah, nomor: 4, teksArab: "مِنْ شَرِّ الْوَسْوَاسِ ەۙ الْخَنَّاسِۖ", teksLatin: "Min syarril-waswāsil-khannās", teksIndonesia: "dari kejahatan (bisikan) setan yang bersembunyi,"),
-        Ayat(ayatId: 6235, suratId: idSurah, nomor: 5, teksArab: "الَّذِيْ يُوَسْوِسُ فِيْ صُدُوْرِ النَّاسِۙ", teksLatin: "Allażī yuwaswisu fī ṣudụrin-nās", teksIndonesia: "yang membisikkan (kejahatan) ke dalam dada manusia,"),
-        Ayat(ayatId: 6236, suratId: idSurah, nomor: 6, teksArab: "مِنَ الْجِنَّةِ وَالنَّاسِ ࣖ", teksLatin: "Minal-jinnati wan-nās", teksIndonesia: "dari (golongan) jin dan manusia.”"),
+      Ayat(suratId: idSurah, nomor: 1, teksArab: "قُلْ اَعُوْذُ بِرَبِّ النَّاسِۙ", teksLatin: "Qul a'ụżu birabbin-nās", teksIndonesia: "Katakanlah, “Aku berlindung kepada Tuhannya manusia,", audioUrl: "https://everyayah.com/data/Abdurrahmaan_As-Sudais_192kbps/114001.mp3"),
+        Ayat(suratId: idSurah, nomor: 2, teksArab: "مَلِكِ النَّاسِۙ", teksLatin: "Malikin-nās", teksIndonesia: "Raja manusia,", audioUrl: "https://everyayah.com/data/Abdurrahmaan_As-Sudais_192kbps/114002.mp3"),
+        Ayat(suratId: idSurah, nomor: 3, teksArab: "اِلٰهِ النَّاسِۙ", teksLatin: "Ilāhin-nās", teksIndonesia: "sembahan manusia,", audioUrl: "https://everyayah.com/data/Abdurrahmaan_As-Sudais_192kbps/114003.mp3"),
+        Ayat(suratId: idSurah, nomor: 4, teksArab: "مِنْ شَرِّ الْوَسْوَاسِ ەۙ الْخَنَّاسِۖ", teksLatin: "Min syarril-waswāsil-khannās", teksIndonesia: "dari kejahatan (bisikan) setan yang bersembunyi,", audioUrl: "https://everyayah.com/data/Abdurrahmaan_As-Sudais_192kbps/114004.mp3"),
+        Ayat(suratId: idSurah, nomor: 5, teksArab: "الَّذِيْ يُوَسْوِسُ فِيْ صُدُوْرِ النَّاسِۙ", teksLatin: "Allażī yuwaswisu fī ṣudụrin-nās", teksIndonesia: "yang membisikkan (kejahatan) ke dalam dada manusia,", audioUrl: "https://everyayah.com/data/Abdurrahmaan_As-Sudais_192kbps/114005.mp3"),
+        Ayat(suratId: idSurah, nomor: 6, teksArab: "مِنَ الْجِنَّةِ وَالنَّاسِ ࣖ", teksLatin: "Minal-jinnati wan-nās", teksIndonesia: "dari (golongan) jin dan manusia.”", audioUrl: "https://everyayah.com/data/Abdurrahmaan_As-Sudais_192kbps/114006.mp3"),
     ];
+
+    for (var ayat in ayatAnNaas) {
+      await txn.insert(ayatTable, ayat.toMap());
+    }
 
     for (var ayat in ayatAnNaas) {
       await txn.insert(ayatTable, ayat.toMap());
@@ -124,7 +124,6 @@ class DatabaseHelper {
 }
 
   // --- SEMUA FUNGSI LAMA ANDA TETAP ADA DI BAWAH INI ---
-
   String _hashPassword(String password) {
     final bytes = utf8.encode(password);
     final digest = sha256.convert(bytes);
@@ -242,15 +241,12 @@ class DatabaseHelper {
     return result.isNotEmpty ? result.first : null;
   }
 
-  // --- BARU --- Fungsi untuk mengambil data surah dan ayat
-
-  // Mengambil semua surah
+  
   Future<List<Map<String, dynamic>>> querySemuaSurah() async {
     Database db = await instance.database;
     return await db.query(surahTable);
   }
 
-  // Mengambil semua ayat berdasarkan ID Surah
   Future<List<Map<String, dynamic>>> queryAyatBySurah(int idSurah) async {
     Database db = await instance.database;
     return await db.query(
