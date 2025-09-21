@@ -43,6 +43,10 @@ dependencies:
   go_router: ^14.2.7
   flutter_svg: ^2.0.10+1
   just_audio: ^0.10.5
+  record: ^5.0.4
+  permission_handler: ^11.0.1
+  speech_to_text: ^6.6.0
+  audio_waveforms: ^1.0.5
 
 dev_dependencies:
   flutter_test:

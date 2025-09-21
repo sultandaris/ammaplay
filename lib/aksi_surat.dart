@@ -1,5 +1,5 @@
-// lib/surah_action_screen.dart
 import 'bermain.dart'; // Import layar Bermain
+import 'menghafal_screen.dart'; // Import layar Menghafal
 import 'package:flutter/material.dart';
 import 'hafalan_surat.dart'; // Import SurahInfo
 
@@ -36,7 +36,7 @@ class SurahActionScreen extends StatelessWidget {
             const SizedBox(height: 50),
             // Tiga Opsi Aksi
             _ActionCard(
-              title: 'Bermain',
+              title: 'Membaca',
               icon: Icons.play_circle_fill_rounded,
               color: const Color(0xFFF9D463),
               onTap: () {
@@ -54,7 +54,11 @@ class SurahActionScreen extends StatelessWidget {
               color: const Color(0xFF58C2A8),
               onTap: () {
                 print('Opsi MENGHAFAL untuk surat ${surah.name} dipilih.');
-                // TODO: Tambahkan navigasi ke layar Menghafal
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => MenghafalScreen(surahInfo: surah),
+                  ),
+                );
               },
             ),
             _ActionCard(
