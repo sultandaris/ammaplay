@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:record/record.dart';
+import 'package:flutter_sound/flutter_sound.dart';
 import 'package:just_audio/just_audio.dart';
 import 'dart:async';
 import 'dart:io';
@@ -21,7 +21,7 @@ class MenghafalScreen extends StatefulWidget {
 class _MenghafalScreenState extends State<MenghafalScreen>
     with TickerProviderStateMixin {
   final dbHelper = DatabaseHelper.instance;
-  final _audioRecorder = AudioRecorder();
+  FlutterSoundRecorder? _audioRecorder;
   final _audioPlayer = AudioPlayer();
 
   // Animation controllers
@@ -36,6 +36,7 @@ class _MenghafalScreenState extends State<MenghafalScreen>
   bool _isPlayingRecording = false;
   bool _isPlayingReference = false;
   bool _hasRecording = false;
+  bool _isRecorderInitialized = false;
   
   Map<String, dynamic>? _surahDetail;
   List<Map<String, dynamic>> _ayatList = [];
@@ -53,8 +54,14 @@ class _MenghafalScreenState extends State<MenghafalScreen>
   void initState() {
     super.initState();
     _initializeAnimations();
+    _initializeRecorder();
     _loadSurahData();
     _requestPermissions();
+  }
+
+  Future<void> _initializeRecorder() async {
+    _audioRecorder = FlutterSoundRecorder();
+    await _audioRecorder!.openRecorder();
   }
 
   void _initializeAnimations() {
@@ -78,12 +85,22 @@ class _MenghafalScreenState extends State<MenghafalScreen>
   }
 
   Future<void> _requestPermissions() async {
-    final status = await Permission.microphone.request();
-    if (status != PermissionStatus.granted) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Izin mikrofon diperlukan untuk fitur rekam')),
-        );
+    final permissionStatus = await Permission.microphone.request();
+    if (permissionStatus != PermissionStatus.granted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Izin mikrofon diperlukan untuk merekam')),
+      );
+    }
+    
+    // Initialize recorder after permissions are granted
+    if (_audioRecorder != null && permissionStatus == PermissionStatus.granted) {
+      try {
+        await _audioRecorder!.openRecorder();
+        setState(() {
+          _isRecorderInitialized = true;
+        });
+      } catch (e) {
+        print('Error initializing recorder: $e');
       }
     }
   }
@@ -111,13 +128,11 @@ class _MenghafalScreenState extends State<MenghafalScreen>
   }
 
   Future<void> _startRecording() async {
-    if (!await _audioRecorder.hasPermission()) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Izin mikrofon diperlukan')),
-      );
+    if (_audioRecorder == null) {
+      print('Recorder not initialized');
       return;
     }
-
+    
     try {
       // Get app documents directory for saving recording
       final directory = await getApplicationDocumentsDirectory();
@@ -125,13 +140,9 @@ class _MenghafalScreenState extends State<MenghafalScreen>
       final filePath = '${directory.path}/$fileName';
 
       // Start recording
-      await _audioRecorder.start(
-        const RecordConfig(
-          encoder: AudioEncoder.aacLc,
-          bitRate: 128000,
-          sampleRate: 44100,
-        ),
-        path: filePath,
+      await _audioRecorder!.startRecorder(
+        toFile: filePath,
+        codec: Codec.aacADTS,
       );
 
       setState(() {
@@ -162,8 +173,10 @@ class _MenghafalScreenState extends State<MenghafalScreen>
   }
 
   Future<void> _stopRecording() async {
+    if (_audioRecorder == null) return;
+    
     try {
-      final path = await _audioRecorder.stop();
+      final path = await _audioRecorder!.stopRecorder();
       _recordingTimer?.cancel();
       _waveAnimationController.stop();
 
@@ -302,7 +315,7 @@ class _MenghafalScreenState extends State<MenghafalScreen>
   void dispose() {
     _waveAnimationController.dispose();
     _pulseAnimationController.dispose();
-    _audioRecorder.dispose();
+    _audioRecorder?.closeRecorder();
     _audioPlayer.dispose();
     _recordingTimer?.cancel();
     super.dispose();
