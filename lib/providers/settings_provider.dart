@@ -82,7 +82,7 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
 
 // Database Helper Provider
 final databaseHelperProvider = Provider<DatabaseHelper>((ref) {
-  return DatabaseHelper.instance;
+  return DatabaseHelper.instance();
 });
 
 // Settings Provider - This is what you'll use in your UI

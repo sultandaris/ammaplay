@@ -1,259 +1,169 @@
-import 'dart:convert';
-import 'dart:io';
-import 'dart:developer' as developer;
-import 'package:crypto/crypto.dart';
-import 'package:path/path.dart';
-import 'package:path_provider/path_provider.dart';
+﻿// Legacy Database Helper - Compatibility Layer
+// This file provides backward compatibility for older components
+// while the app transitions to the new Database V3 system
+
+import 'dart:async';
 import 'package:sqflite/sqflite.dart';
-import 'models/quran.dart'; // --- BARU --- Impor file model
+import 'package:path/path.dart';
 
 class DatabaseHelper {
-  static const _databaseName = "amma.db";
-  static const _databaseVersion = 2;
-
-  static const settingsTable = 'settings';
-  static const usersTable = 'users';
-  // --- BARU --- Definisikan nama tabel surah dan ayat
-  static const surahTable = 'surat';
-  static const ayatTable = 'ayat';
-
-  DatabaseHelper._privateConstructor();
-  static final DatabaseHelper instance = DatabaseHelper._privateConstructor();
+  static final DatabaseHelper _instance = DatabaseHelper._internal();
+  factory DatabaseHelper.instance() => _instance;
+  DatabaseHelper._internal();
 
   static Database? _database;
+
   Future<Database> get database async {
-    if (_database != null) return _database!;
-    _database = await _initDatabase();
+    _database ??= await _initDatabase();
     return _database!;
   }
 
-  _initDatabase() async {
-    Directory documentsDirectory = await getApplicationDocumentsDirectory();
-    String path = join(documentsDirectory.path, _databaseName);
-    developer.log("Database path: ${documentsDirectory.path}/amma.db");
-    return await openDatabase(
-      path,
-      version: _databaseVersion,
-      onCreate: _onCreate,
-    );
+  Future<Database> _initDatabase() async {
+    final databasesPath = await getDatabasesPath();
+    final path = join(databasesPath, 'ammaplay_legacy.db');
+
+    return await openDatabase(path, version: 1, onCreate: _onCreate);
   }
 
-  Future _onCreate(Database db, int version) async {
+  Future<void> _onCreate(Database db, int version) async {
     await db.execute('''
-          CREATE TABLE $settingsTable (
-            key TEXT PRIMARY KEY,
-            value TEXT NOT NULL
-          )
-          ''');
-
-    await db.execute('''
-          CREATE TABLE $usersTable (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            email TEXT NOT NULL UNIQUE,
-            password_hash TEXT NOT NULL,
-            username TEXT NOT NULL 
-          )
-          ''');
-
-    await db.execute('''
-        CREATE TABLE $surahTable (
+      CREATE TABLE surat(
         surat_id INTEGER PRIMARY KEY,
-        nama TEXT NOT NULL,
-        arti TEXT,
-        jumlah_ayat INTEGER
-        )
-        ''');
-    developer.log("Tabel '$surahTable' dibuat.");
-
-    await db.execute('''
-    CREATE TABLE $ayatTable (
-      ayat_id INTEGER PRIMARY KEY AUTOINCREMENT, -- CUKUP TAMBAHKAN AUTOINCREMENT
-      surat_id INTEGER NOT NULL,
-      nomor INTEGER NOT NULL,
-      teks_arab TEXT NOT NULL,
-      teks_latin TEXT NOT NULL,
-      teks_indonesia TEXT NOT NULL,
-      audio_url TEXT NOT NULL, 
-      FOREIGN KEY(surat_id) REFERENCES surat(surat_id)
+        nama TEXT
       )
-      ''');
-    developer.log("Tabel '$ayatTable' dibuat.");
+    ''');
 
     await db.execute('''
-      INSERT INTO $settingsTable (key, value) VALUES
-      ('sound', 'on'),
-      ('notifications', 'on'),
-      ('font_size', 'medium')
-      ''');
+      CREATE TABLE ayat(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        surat_id INTEGER,
+        ayat_id INTEGER,
+        arab TEXT,
+        latin TEXT,
+        FOREIGN KEY (surat_id) REFERENCES surat (surat_id)
+      )
+    ''');
 
-    await _insertDataAnNaas(db);
+    await db.execute('''
+      CREATE TABLE users(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        email TEXT UNIQUE,
+        password TEXT,
+        username TEXT
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE settings(
+        key TEXT PRIMARY KEY,
+        value TEXT
+      )
+    ''');
   }
 
-  Future<void> _insertDataAnNaas(Database db) async {
-  await db.transaction((txn) async {
-    // Masukkan data Surah An-Naas
-    int idSurah = await txn.insert(
-        surahTable,
-        Surah(
-          suratId: 114,
-          nama: "An-Nas", // Nama disesuaikan dengan UI
-          arti: "Manusia",
-          jumlahAyat: 6,
-        ).toMap());
-    developer.log("Data surah An-Nas (ID: $idSurah) dimasukkan.");
-
-    // List data ayat untuk An-Naas dengan data lengkap
-    List<Ayat> ayatAnNaas = [
-      Ayat(suratId: idSurah, nomor: 1, teksArab: "قُلْ اَعُوْذُ بِرَبِّ النَّاسِۙ", teksLatin: "Qul a'ụżu birabbin-nās", teksIndonesia: "Katakanlah, “Aku berlindung kepada Tuhannya manusia,", audioUrl: "https://everyayah.com/data/Abdurrahmaan_As-Sudais_192kbps/114001.mp3"),
-        Ayat(suratId: idSurah, nomor: 2, teksArab: "مَلِكِ النَّاسِۙ", teksLatin: "Malikin-nās", teksIndonesia: "Raja manusia,", audioUrl: "https://everyayah.com/data/Abdurrahmaan_As-Sudais_192kbps/114002.mp3"),
-        Ayat(suratId: idSurah, nomor: 3, teksArab: "اِلٰهِ النَّاسِۙ", teksLatin: "Ilāhin-nās", teksIndonesia: "sembahan manusia,", audioUrl: "https://everyayah.com/data/Abdurrahmaan_As-Sudais_192kbps/114003.mp3"),
-        Ayat(suratId: idSurah, nomor: 4, teksArab: "مِنْ شَرِّ الْوَسْوَاسِ ەۙ الْخَنَّاسِۖ", teksLatin: "Min syarril-waswāsil-khannās", teksIndonesia: "dari kejahatan (bisikan) setan yang bersembunyi,", audioUrl: "https://everyayah.com/data/Abdurrahmaan_As-Sudais_192kbps/114004.mp3"),
-        Ayat(suratId: idSurah, nomor: 5, teksArab: "الَّذِيْ يُوَسْوِسُ فِيْ صُدُوْرِ النَّاسِۙ", teksLatin: "Allażī yuwaswisu fī ṣudụrin-nās", teksIndonesia: "yang membisikkan (kejahatan) ke dalam dada manusia,", audioUrl: "https://everyayah.com/data/Abdurrahmaan_As-Sudais_192kbps/114005.mp3"),
-        Ayat(suratId: idSurah, nomor: 6, teksArab: "مِنَ الْجِنَّةِ وَالنَّاسِ ࣖ", teksLatin: "Minal-jinnati wan-nās", teksIndonesia: "dari (golongan) jin dan manusia.”", audioUrl: "https://everyayah.com/data/Abdurrahmaan_As-Sudais_192kbps/114006.mp3"),
-    ];
-
-    for (var ayat in ayatAnNaas) {
-      await txn.insert(ayatTable, ayat.toMap());
-    }
-
-    for (var ayat in ayatAnNaas) {
-      await txn.insert(ayatTable, ayat.toMap());
-    }
-    developer.log("Data ${ayatAnNaas.length} ayat untuk surah An-Nas dimasukkan.");
-  });
-}
-
-  // --- SEMUA FUNGSI LAMA ANDA TETAP ADA DI BAWAH INI ---
-  String _hashPassword(String password) {
-    final bytes = utf8.encode(password);
-    final digest = sha256.convert(bytes);
-    return digest.toString();
+  Future<List<Map<String, dynamic>>> querySemuaSurah() async {
+    final db = await database;
+    return await db.query('surat', orderBy: 'surat_id DESC');
   }
 
-  Future<bool> signUp(String email, String password, {String? username}) async {
-    print("Memproses pendaftaran");
-    final db = await instance.database;
-    final hashedPassword = _hashPassword(password);
-    try {
-      await db.insert(
-        usersTable,
-        {
-          'email': email,
-          'password_hash': hashedPassword,
-          'username': username ?? 'Sahabat',
-        },
-        conflictAlgorithm: ConflictAlgorithm.fail,
-      );
-      return true;
-    } catch (e) {
-      print(e);
-      return false;
-    }
-  }
-
-  Future<void> deleteDatabaseFile() async {
-    // Tutup koneksi database sebelum menghapus file
-    if (_database != null) {
-      await _database!.close();
-      _database = null;
-    }
-    final documentsDirectory = await getApplicationDocumentsDirectory();
-    final path = join(documentsDirectory.path, DatabaseHelper._databaseName);
-    final file = File(path);
-    if (await file.exists()) {
-      await file.delete();
-      print("Database deleted: $path");
-    }
-  }
-
-  Future<bool> login(String email, String password) async {
-    final db = await instance.database;
-    final hashedPassword = _hashPassword(password);
-
-    final result = await db.query(
-      usersTable,
-      where: 'email = ? AND password_hash = ?',
-      whereArgs: [email, hashedPassword],
+  Future<List<Map<String, dynamic>>> queryAyatBySurah(int suratId) async {
+    final db = await database;
+    return await db.query(
+      'ayat',
+      where: 'surat_id = ?',
+      whereArgs: [suratId],
+      orderBy: 'ayat_id ASC',
     );
-    List<Map<String, dynamic>> users = await db.query(usersTable);
-    developer.log('Users in database: $users');
-    return result.isNotEmpty;
-  }
-
-  Future<int> updateSetting(String key, String value) async {
-    Database db = await instance.database;
-    return await db.insert(settingsTable, {
-      'key': key,
-      'value': value,
-    }, conflictAlgorithm: ConflictAlgorithm.replace);
-  }
-
-  Future<String?> getSetting(String key) async {
-    Database db = await instance.database;
-    List<Map<String, dynamic>> maps = await db.query(
-      settingsTable,
-      columns: ['value'],
-      where: 'key = ?',
-      whereArgs: [key],
-    );
-    if (maps.isNotEmpty) {
-      return maps.first['value'];
-    }
-    return null;
   }
 
   Future<Map<String, dynamic>?> getUserByEmail(String email) async {
-    final db = await instance.database;
+    final db = await database;
     final result = await db.query(
-      usersTable,
+      'users',
       where: 'email = ?',
       whereArgs: [email],
     );
     return result.isNotEmpty ? result.first : null;
   }
 
-  Future<bool> updateUserProfile(int userId, String username, String email) async {
-    final db = await instance.database;
+  Future<bool> login(String email, String password) async {
+    final user = await getUserByEmail(email);
+    return user != null && user['password'] == password;
+  }
+
+  Future<bool> signUp(String email, String password, {String? username}) async {
     try {
-      final count = await db.update(
-        usersTable,
-        {
-          'username': username,
-          'email': email,
-        },
-        where: 'id = ?',
-        whereArgs: [userId],
-      );
-      return count > 0;
+      final db = await database;
+      await db.insert('users', {
+        'email': email,
+        'password': password,
+        'username': username ?? email.split('@').first,
+      });
+      return true;
     } catch (e) {
-      print('Error updating user profile: $e');
       return false;
     }
   }
 
-  Future<Map<String, dynamic>?> getUserById(int userId) async {
-    final db = await instance.database;
+  Future<bool> updateUserProfile({
+    required String email,
+    String? newUsername,
+    String? newPassword,
+  }) async {
+    try {
+      final db = await database;
+      Map<String, dynamic> updates = {};
+
+      if (newUsername != null) updates['username'] = newUsername;
+      if (newPassword != null) updates['password'] = newPassword;
+
+      if (updates.isEmpty) return false;
+
+      final rowsUpdated = await db.update(
+        'users',
+        updates,
+        where: 'email = ?',
+        whereArgs: [email],
+      );
+      return rowsUpdated > 0;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  Future<String?> getSetting(String key) async {
+    final db = await database;
     final result = await db.query(
-      usersTable,
-      where: 'id = ?',
-      whereArgs: [userId],
+      'settings',
+      where: 'key = ?',
+      whereArgs: [key],
     );
-    return result.isNotEmpty ? result.first : null;
+    return result.isNotEmpty ? result.first['value'] as String : null;
   }
 
-  
-  Future<List<Map<String, dynamic>>> querySemuaSurah() async {
-    Database db = await instance.database;
-    return await db.query(surahTable);
+  Future<void> updateSetting(String key, String value) async {
+    final db = await database;
+    await db.insert('settings', {
+      'key': key,
+      'value': value,
+    }, conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
-  Future<List<Map<String, dynamic>>> queryAyatBySurah(int idSurah) async {
-    Database db = await instance.database;
-    return await db.query(
-      ayatTable,
-      where: 'surat_id = ?',
-      whereArgs: [idSurah],
-      orderBy: 'nomor ASC',
-    );
+  Future<Map<String, dynamic>?> loginFamily(
+    String email,
+    String password,
+  ) async {
+    final user = await getUserByEmail(email);
+    if (user != null && user['password'] == password) {
+      return user;
+    }
+    return null;
+  }
+
+  Future<void> close() async {
+    if (_database != null) {
+      await _database!.close();
+      _database = null;
+    }
   }
 }

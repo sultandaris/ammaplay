@@ -14,7 +14,7 @@ class BermainScreen extends StatefulWidget {
 }
 
 class _BermainScreenState extends State<BermainScreen> {
-  final dbHelper = DatabaseHelper.instance;
+  final dbHelper = DatabaseHelper.instance();
   final _audioPlayer = AudioPlayer();
 
   bool _isLoading = true;

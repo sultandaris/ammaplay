@@ -15,7 +15,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _usernameController = TextEditingController();
-  late final dbHelper = DatabaseHelper.instance;
+  late final dbHelper = DatabaseHelper.instance();
 
   void _processSignUp() async {
     if (_formKey.currentState!.validate()) {

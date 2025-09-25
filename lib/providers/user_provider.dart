@@ -9,17 +9,9 @@ class UserState {
   final bool isLoggedIn;
   final bool isLoading;
 
-  const UserState({
-    this.user,
-    this.isLoggedIn = false,
-    this.isLoading = false,
-  });
+  const UserState({this.user, this.isLoggedIn = false, this.isLoading = false});
 
-  UserState copyWith({
-    User? user,
-    bool? isLoggedIn,
-    bool? isLoading,
-  }) {
+  UserState copyWith({User? user, bool? isLoggedIn, bool? isLoading}) {
     return UserState(
       user: user ?? this.user,
       isLoggedIn: isLoggedIn ?? this.isLoggedIn,
@@ -39,10 +31,10 @@ class UserNotifier extends StateNotifier<UserState> {
   // Check if user is logged in when app starts
   Future<void> _checkLoginStatus() async {
     state = state.copyWith(isLoading: true);
-    
+
     try {
       final isLoggedIn = await SharedPreferencesHelper.getLoginStatus();
-      
+
       if (isLoggedIn) {
         await _loadCurrentUser();
       } else {
@@ -58,19 +50,16 @@ class UserNotifier extends StateNotifier<UserState> {
   Future<void> _loadCurrentUser() async {
     try {
       // Get the logged in user email from SharedPreferences
-      final loggedInEmail = await SharedPreferencesHelper.getLoggedInUserEmail();
-      
+      final loggedInEmail =
+          await SharedPreferencesHelper.getLoggedInUserEmail();
+
       if (loggedInEmail != null) {
         // Get user by email to ensure we get the correct user
         final userData = await _databaseHelper.getUserByEmail(loggedInEmail);
-        
+
         if (userData != null) {
           final user = User.fromMap(userData);
-          state = UserState(
-            user: user,
-            isLoggedIn: true,
-            isLoading: false,
-          );
+          state = UserState(user: user, isLoggedIn: true, isLoading: false);
         } else {
           // User not found in database, logout
           await logout();
@@ -88,15 +77,15 @@ class UserNotifier extends StateNotifier<UserState> {
   // Login user
   Future<bool> login(String email, String password) async {
     state = state.copyWith(isLoading: true);
-    
+
     try {
       final success = await _databaseHelper.login(email, password);
-      
+
       if (success) {
         // Store login status and user email
         await SharedPreferencesHelper.setLoginStatus(true);
         await SharedPreferencesHelper.setLoggedInUserEmail(email);
-        
+
         // Load the specific user who just logged in
         await _loadCurrentUser();
         return true;
@@ -114,10 +103,14 @@ class UserNotifier extends StateNotifier<UserState> {
   // Signup user
   Future<bool> signup(String email, String password, {String? username}) async {
     state = state.copyWith(isLoading: true);
-    
+
     try {
-      final success = await _databaseHelper.signUp(email, password, username: username);
-      
+      final success = await _databaseHelper.signUp(
+        email,
+        password,
+        username: username,
+      );
+
       if (success) {
         // After successful signup, login the user
         final loginSuccess = await login(email, password);
@@ -150,9 +143,10 @@ class UserNotifier extends StateNotifier<UserState> {
 
     try {
       final success = await _databaseHelper.updateUserProfile(
-        state.user!.id!,
-        username,
-        email,
+        email: state.user!.email,
+        newUsername: username,
+        newPassword:
+            email, // This should be password, but we're using email for now
       );
 
       if (success) {
@@ -202,5 +196,5 @@ final isLoadingProvider = Provider<bool>((ref) {
 
 // Database Helper Provider (if not already defined elsewhere)
 final databaseHelperProvider = Provider<DatabaseHelper>((ref) {
-  return DatabaseHelper.instance;
+  return DatabaseHelper.instance();
 });

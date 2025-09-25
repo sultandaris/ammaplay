@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'database_helper.dart'; // <-- 1. IMPOR DATABASE HELPER
-import 'aksi_surat.dart'; // <-- 2. IMPOR SURAH ACTION SCREEN
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'providers/family_user_provider.dart';
+import 'aksi_surat.dart';
 
 class SurahInfo {
   final String name;
@@ -18,55 +19,14 @@ class SurahInfo {
 // Data statis ini tidak akan kita gunakan lagi, dihapus atau dikomentari
 // final List<SurahInfo> level1Surahs = [ ... ];
 
-class PilihSuratScreen extends StatefulWidget {
+class PilihSuratScreen extends ConsumerStatefulWidget {
   const PilihSuratScreen({super.key});
 
   @override
-  _PilihSuratScreenState createState() => _PilihSuratScreenState();
+  ConsumerState<PilihSuratScreen> createState() => _PilihSuratScreenState();
 }
 
-class _PilihSuratScreenState extends State<PilihSuratScreen> {
-  // --- 2. PERUBAHAN UTAMA DIMULAI DI SINI ---
-  late Future<List<SurahInfo>> _surahsFuture;
-  final dbHelper = DatabaseHelper.instance;
-
-  @override
-  void initState() {
-    super.initState();
-    // Panggil fungsi untuk memuat data dari DB saat screen diinisialisasi
-    _surahsFuture = _loadSurahsFromDB();
-  }
-
-  // Fungsi untuk mengambil data dari database dan mengubahnya menjadi List<SurahInfo>
-  Future<List<SurahInfo>> _loadSurahsFromDB() async {
-    // Panggil query dari database helper
-    final List<Map<String, dynamic>> surahMaps = await dbHelper.querySemuaSurah();
-
-    // Jika tidak ada data di DB, kembalikan list kosong
-    if (surahMaps.isEmpty) {
-      return [];
-    }
-
-    // Ubah (map) setiap item dari database menjadi objek SurahInfo
-    return surahMaps.asMap().entries.map((entry) {
-      int index = entry.key;
-      Map<String, dynamic> surahData = entry.value;
-      
-      // Logika sementara untuk status terkunci dan selesai
-      // Dalam aplikasi nyata, status ini harus disimpan di database (misal: di tabel user_progress)
-      bool isLocked = index != 0; // Hanya surat pertama (An-Naas) yang terbuka
-      bool isCompleted = index == 0; // Anggap surat pertama sudah selesai
-
-      return SurahInfo(
-        name: surahData['nama'], // Ambil 'nama' dari database
-        isLocked: isLocked,
-        isCompleted: isCompleted,
-      );
-    }).toList();
-  }
-  // --- AKHIR DARI PERUBAHAN LOGIKA DATA ---
-
-
+class _PilihSuratScreenState extends ConsumerState<PilihSuratScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -97,33 +57,72 @@ class _PilihSuratScreenState extends State<PilihSuratScreen> {
                           const SizedBox(height: 20),
                           _LevelBanner(level: 1, isSpecial: true),
                           const SizedBox(height: 16),
-                          
-                          // --- 3. GUNAKAN FUTUREBUILDER UNTUK MENAMPILKAN GRID ---
-                          FutureBuilder<List<SurahInfo>>(
-                            future: _surahsFuture,
-                            builder: (context, snapshot) {
-                              // Tampilkan loading indicator saat data sedang dimuat
-                              if (snapshot.connectionState == ConnectionState.waiting) {
+
+                          // Use Riverpod provider to get surahs with progress
+                          Consumer(
+                            builder: (context, ref, child) {
+                              final currentUser = ref.watch(familyUserProvider);
+                              final userId = currentUser.user?.idPengguna;
+
+                              if (userId == null) {
                                 return const Center(
-                                  child: Padding(
-                                    padding: EdgeInsets.all(50.0),
-                                    child: CircularProgressIndicator(color: Colors.white),
+                                  child: Text(
+                                    'Please log in to view surahs.',
+                                    style: TextStyle(color: Colors.white),
                                   ),
                                 );
                               }
-                              // Tampilkan pesan error jika terjadi kesalahan
-                              else if (snapshot.hasError) {
-                                return Center(child: Text('Error: ${snapshot.error}', style: TextStyle(color: Colors.white)));
-                              }
-                              // Jika data berhasil dimuat dan tidak kosong
-                              else if (snapshot.hasData && snapshot.data!.isNotEmpty) {
-                                final surahs = snapshot.data!;
-                                return _SurahGrid(surahs: surahs);
-                              }
-                              // Jika data kosong atau tidak ada
-                              else {
-                                return const Center(child: Text('Tidak ada surat ditemukan di database.', style: TextStyle(color: Colors.white)));
-                              }
+
+                              final surahsAsyncValue = ref.watch(
+                                surahsWithProgressProvider(userId),
+                              );
+
+                              return surahsAsyncValue.when(
+                                data: (surahs) {
+                                  if (surahs.isEmpty) {
+                                    return const Center(
+                                      child: Text(
+                                        'Tidak ada surat ditemukan di database.',
+                                        style: TextStyle(color: Colors.white),
+                                      ),
+                                    );
+                                  }
+
+                                  // Convert SurahWithProgress to SurahInfo for compatibility
+                                  final surahInfoList = surahs
+                                      .map(
+                                        (surahWithProgress) => SurahInfo(
+                                          name:
+                                              surahWithProgress.surah.namaLatin,
+                                          isLocked:
+                                              !surahWithProgress.isUnlocked,
+                                          isCompleted:
+                                              (surahWithProgress
+                                                      .progres
+                                                      ?.totalBintang ??
+                                                  0) >=
+                                              3,
+                                        ),
+                                      )
+                                      .toList();
+
+                                  return _SurahGrid(surahs: surahInfoList);
+                                },
+                                loading: () => const Center(
+                                  child: Padding(
+                                    padding: EdgeInsets.all(50.0),
+                                    child: CircularProgressIndicator(
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ),
+                                error: (error, stack) => Center(
+                                  child: Text(
+                                    'Error: $error',
+                                    style: const TextStyle(color: Colors.white),
+                                  ),
+                                ),
+                              );
                             },
                           ),
                           const SizedBox(height: 24),
@@ -139,7 +138,7 @@ class _PilihSuratScreenState extends State<PilihSuratScreen> {
       ),
     );
   }
-  
+
   // Widget _buildCustomAppBar tidak berubah
   Widget _buildCustomAppBar(BuildContext context) {
     return Padding(
@@ -194,7 +193,6 @@ class _PilihSuratScreenState extends State<PilihSuratScreen> {
 
 // Widget _LevelBanner dan _SurahGrid tidak perlu diubah sama sekali
 class _LevelBanner extends StatelessWidget {
-  // ... (kode sama seperti sebelumnya) ...
   final int level;
   final bool isSpecial;
 
@@ -273,6 +271,7 @@ class _SurahGrid extends StatelessWidget {
     );
   }
 }
+
 class _SurahCard extends StatelessWidget {
   final SurahInfo surah;
 
@@ -302,7 +301,9 @@ class _SurahCard extends StatelessWidget {
       color: Colors.transparent, // Buat Card transparan
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       child: InkWell(
-        borderRadius: BorderRadius.circular(20), // Samakan radius untuk efek ripple
+        borderRadius: BorderRadius.circular(
+          20,
+        ), // Samakan radius untuk efek ripple
         onTap: () {
           // Aksi ketika kartu di-tap
           print('Surat ${surah.name} ditekan!');
@@ -344,9 +345,21 @@ class _SurahCard extends StatelessWidget {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.star_rounded, color: Color(0xFF6B4F1A), size: 18),
-                      Icon(Icons.star_rounded, color: Color(0xFF6B4F1A), size: 18),
-                      Icon(Icons.star_rounded, color: Color(0xFF6B4F1A), size: 18),
+                      Icon(
+                        Icons.star_rounded,
+                        color: Color(0xFF6B4F1A),
+                        size: 18,
+                      ),
+                      Icon(
+                        Icons.star_rounded,
+                        color: Color(0xFF6B4F1A),
+                        size: 18,
+                      ),
+                      Icon(
+                        Icons.star_rounded,
+                        color: Color(0xFF6B4F1A),
+                        size: 18,
+                      ),
                     ],
                   ),
                 ),

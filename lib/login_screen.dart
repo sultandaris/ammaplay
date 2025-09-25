@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'database_helper.dart';
-import 'providers/user_provider.dart';
+import 'providers/family_user_provider.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -14,16 +13,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  final dbHelper = DatabaseHelper.instance;
 
   void _processLogin() async {
     if (_formKey.currentState!.validate()) {
       final email = _emailController.text;
       final password = _passwordController.text;
 
-      // Use user provider for login
-      final userNotifier = ref.read(userProvider.notifier);
-      final success = await userNotifier.login(email, password);
+      final familyUserNotifier = ref.read(familyUserProvider.notifier);
+      final success = await familyUserNotifier.login(email, password);
 
       if (mounted) {
         if (success) {
@@ -32,9 +29,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           ).showSnackBar(const SnackBar(content: Text('Login berhasil!.')));
           Navigator.of(context).pop();
         } else {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(const SnackBar(content: Text('login gagal.')));
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Email atau password salah.')),
+          );
         }
       }
     }

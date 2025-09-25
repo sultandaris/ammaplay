@@ -1,5 +1,6 @@
 import 'bermain.dart'; // Import layar Bermain
 import 'menghafal_screen.dart'; // Import layar Menghafal
+import 'memaknai_screen.dart'; // Import layar Memaknai
 import 'package:flutter/material.dart';
 import 'hafalan_surat.dart'; // Import SurahInfo
 
@@ -67,7 +68,11 @@ class SurahActionScreen extends StatelessWidget {
               color: const Color(0xFF4C98A4),
               onTap: () {
                 print('Opsi MEMAKNAI untuk surat ${surah.name} dipilih.');
-                // TODO: Tambahkan navigasi ke layar Memaknai
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => MemaknaiScreen(surahInfo: surah),
+                  ),
+                );
               },
             ),
           ],
@@ -140,7 +145,10 @@ class _ActionCard extends StatelessWidget {
             decoration: BoxDecoration(
               color: color,
               borderRadius: BorderRadius.circular(25),
-              border: Border.all(color: Colors.white.withOpacity(0.5), width: 3),
+              border: Border.all(
+                color: Colors.white.withOpacity(0.5),
+                width: 3,
+              ),
             ),
             child: Row(
               children: [

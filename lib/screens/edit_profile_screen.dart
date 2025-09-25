@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../providers/user_provider.dart';
+import '../providers/family_user_provider.dart';
+import '../models/family_models.dart';
 
 class EditProfileScreen extends ConsumerStatefulWidget {
   const EditProfileScreen({super.key});
@@ -14,18 +15,14 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   final _usernameController = TextEditingController();
   final _emailController = TextEditingController();
   bool _isLoading = false;
+  bool _isInitialized = false;
 
-  @override
-  void initState() {
-    super.initState();
-    // Pre-fill form with current user data
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final currentUser = ref.read(currentUserProvider);
-      if (currentUser != null) {
-        _usernameController.text = currentUser.username;
-        _emailController.text = currentUser.email;
-      }
-    });
+  void _initializeControllers(FamilyUser? currentUser) {
+    if (currentUser != null && !_isInitialized) {
+      _usernameController.text = currentUser.namaPengguna;
+      _emailController.text = currentUser.email;
+      _isInitialized = true;
+    }
   }
 
   @override
@@ -42,10 +39,10 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       _isLoading = true;
     });
 
-    final userNotifier = ref.read(userProvider.notifier);
-    final success = await userNotifier.updateProfile(
-      _usernameController.text.trim(),
-      _emailController.text.trim(),
+    final familyUserNotifier = ref.read(familyUserProvider.notifier);
+    final success = await familyUserNotifier.updateProfile(
+      namaPengguna: _usernameController.text.trim(),
+      email: _emailController.text.trim(),
     );
 
     setState(() {
@@ -74,23 +71,45 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final currentUser = ref.watch(currentUserProvider);
-    final isLoggedIn = ref.watch(isLoggedInProvider);
+    final familyUserState = ref.watch(familyUserProvider);
+    final currentUser = familyUserState.user;
+    final isLoggedIn = familyUserState.isLoggedIn;
+    final isLoadingUser = familyUserState.isLoading;
 
-    if (!isLoggedIn || currentUser == null) {
+    // Initialize controllers when user data is available
+    _initializeControllers(currentUser);
+
+    if (!isLoggedIn) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Profil Keluarga')),
+        body: const Center(child: Text('Anda harus login terlebih dahulu')),
+      );
+    }
+
+    // Show loading spinner while user data is being loaded
+    if (isLoadingUser || currentUser == null) {
       return Scaffold(
         appBar: AppBar(
-          title: const Text('Edit Profil'),
+          title: const Text('Profil Keluarga'),
+          backgroundColor: Colors.blue[700],
+          foregroundColor: Colors.white,
         ),
         body: const Center(
-          child: Text('Anda harus login terlebih dahulu'),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              CircularProgressIndicator(),
+              SizedBox(height: 16),
+              Text('Memuat data profil...'),
+            ],
+          ),
         ),
       );
     }
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Edit Profil'),
+        title: const Text('Profil Keluarga'),
         backgroundColor: Colors.blue[700],
         foregroundColor: Colors.white,
       ),
@@ -108,15 +127,21 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                   child: Column(
                     children: [
                       const Icon(
-                        Icons.person,
+                        Icons.family_restroom,
                         size: 80,
                         color: Colors.blue,
                       ),
                       const SizedBox(height: 16),
                       Text(
-                        'Profil Saya',
-                        style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                          fontWeight: FontWeight.bold,
+                        'Profil Keluarga',
+                        style: Theme.of(context).textTheme.headlineSmall
+                            ?.copyWith(fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Informasi akun keluarga Anda',
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: Colors.grey[600],
                         ),
                       ),
                     ],
@@ -127,16 +152,17 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
               TextFormField(
                 controller: _usernameController,
                 decoration: const InputDecoration(
-                  labelText: 'Username',
+                  labelText: 'Nama Keluarga',
                   border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.person_outline),
+                  prefixIcon: Icon(Icons.family_restroom),
+                  helperText: 'Nama keluarga untuk akun ini',
                 ),
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
-                    return 'Username tidak boleh kosong';
+                    return 'Nama keluarga tidak boleh kosong';
                   }
                   if (value.trim().length < 3) {
-                    return 'Username minimal 3 karakter';
+                    return 'Nama keluarga minimal 3 karakter';
                   }
                   return null;
                 },
@@ -148,23 +174,54 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                   labelText: 'Email',
                   border: OutlineInputBorder(),
                   prefixIcon: Icon(Icons.email_outlined),
+                  helperText: 'Email untuk login dan notifikasi',
                 ),
                 keyboardType: TextInputType.emailAddress,
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
                     return 'Email tidak boleh kosong';
                   }
-                  if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
+                  if (!RegExp(
+                    r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+                  ).hasMatch(value)) {
                     return 'Format email tidak valid';
                   }
                   return null;
                 },
               ),
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.green[50],
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.green[200]!),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.check_circle_outline,
+                      color: Colors.green[600],
+                      size: 20,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Anda dapat mengedit nama keluarga dan email. Perubahan akan disimpan ke database.',
+                        style: TextStyle(
+                          color: Colors.green[700],
+                          fontSize: 13,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
               const SizedBox(height: 32),
               ElevatedButton(
                 onPressed: _isLoading ? null : _updateProfile,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue[700],
+                  backgroundColor: Colors.blue[600],
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                 ),
@@ -174,7 +231,9 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                         width: 20,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            Colors.white,
+                          ),
                         ),
                       )
                     : const Text(

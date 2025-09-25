@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../providers/settings_provider.dart';
-import '../providers/user_provider.dart';
+import '../providers/family_user_provider.dart';
 import '../models/settings.dart';
 import '../router/app_router.dart';
 import 'edit_profile_screen.dart';
@@ -17,7 +17,6 @@ class SettingsScreenMinimalist extends ConsumerStatefulWidget {
 
 class _SettingsScreenMinimalistState
     extends ConsumerState<SettingsScreenMinimalist> {
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -91,10 +90,10 @@ class _SettingsScreenMinimalistState
   }
 
   Widget _buildAccountSection(TextTheme textTheme) {
-    final userState = ref.watch(userProvider);
+    final userState = ref.watch(familyUserProvider);
     final currentUser = userState.user;
     final isLoggedIn = userState.isLoggedIn;
-    
+
     return Card(
       elevation: 0.5,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -104,7 +103,7 @@ class _SettingsScreenMinimalistState
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(
-              "Tautkan Akun Orang Tua",
+              "Informasi Akun Keluarga",
               textAlign: TextAlign.center,
               style: textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.bold,
@@ -112,59 +111,225 @@ class _SettingsScreenMinimalistState
             ),
             const SizedBox(height: 16),
             if (isLoggedIn && currentUser != null) ...[
-              ListTile(
-                leading: const Icon(Icons.person, color: Colors.blue),
-                title: Text(currentUser.username, style: textTheme.bodyLarge),
-                subtitle: Text(currentUser.email, style: textTheme.bodyMedium),
-                trailing: IconButton(
-                  icon: const Icon(Icons.edit, color: Colors.blue),
-                  onPressed: _editProfile,
+              // User Profile Section
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.blue[50],
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.blue[200]!, width: 1),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        CircleAvatar(
+                          backgroundColor: Colors.blue[600],
+                          child: Icon(
+                            Icons.family_restroom,
+                            color: Colors.white,
+                            size: 20,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Nama Keluarga',
+                                style: textTheme.labelSmall?.copyWith(
+                                  color: Colors.grey[600],
+                                  fontSize: 11,
+                                ),
+                              ),
+                              Text(
+                                currentUser.namaPengguna,
+                                style: textTheme.bodyLarge?.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Divider(color: Colors.blue[200], height: 1),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.email_outlined,
+                          color: Colors.blue[600],
+                          size: 16,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Email Akun',
+                                style: textTheme.labelSmall?.copyWith(
+                                  color: Colors.grey[600],
+                                  fontSize: 11,
+                                ),
+                              ),
+                              Text(
+                                currentUser.email,
+                                style: textTheme.bodyMedium?.copyWith(
+                                  color: Colors.blue[700],
+                                  fontWeight: FontWeight.w500,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    if (currentUser.idPengguna != null) ...[
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.badge_outlined,
+                            color: Colors.blue[600],
+                            size: 16,
+                          ),
+                          const SizedBox(width: 8),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'ID Pengguna',
+                                style: textTheme.labelSmall?.copyWith(
+                                  color: Colors.grey[600],
+                                  fontSize: 11,
+                                ),
+                              ),
+                              Text(
+                                '#${currentUser.idPengguna}',
+                                style: textTheme.bodySmall?.copyWith(
+                                  color: Colors.grey[700],
+                                  fontFamily: 'monospace',
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ],
+                  ],
                 ),
               ),
               const SizedBox(height: 16),
               Row(
                 children: [
                   Expanded(
-                    child: ElevatedButton(
+                    child: ElevatedButton.icon(
                       onPressed: _editProfile,
-                      style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
-                      child: const Text(
-                        "Edit Profil",
-                        style: TextStyle(color: Colors.white),
+                      icon: const Icon(Icons.edit, size: 18),
+                      label: const Text("Edit Profil"),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.blue[600],
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
                       ),
                     ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: ElevatedButton(
+                    child: ElevatedButton.icon(
                       onPressed: _logout,
-                      style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-                      child: const Text(
-                        "Logout",
-                        style: TextStyle(color: Colors.white),
+                      icon: const Icon(Icons.logout, size: 18),
+                      label: const Text("Keluar"),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.red[600],
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
                       ),
                     ),
                   ),
                 ],
               ),
             ] else ...[
+              // Not logged in state
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.orange[50],
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.orange[200]!, width: 1),
+                ),
+                child: Column(
+                  children: [
+                    Icon(
+                      Icons.account_circle_outlined,
+                      size: 48,
+                      color: Colors.orange[400],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      "Belum Masuk",
+                      style: textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: Colors.orange[700],
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      "Masuk untuk menyimpan progress belajar",
+                      style: textTheme.bodySmall?.copyWith(
+                        color: Colors.orange[600],
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
               Row(
                 children: [
                   Expanded(
-                    child: OutlinedButton(
+                    child: OutlinedButton.icon(
                       onPressed: () {
                         context.push(AppRoutes.signup);
                       },
-                      child: const Text("Daftar"),
+                      icon: const Icon(Icons.person_add, size: 18),
+                      label: const Text("Daftar"),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
                     ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: ElevatedButton(
+                    child: ElevatedButton.icon(
                       onPressed: () {
                         context.push(AppRoutes.login);
                       },
-                      child: const Text("Masuk"),
+                      icon: const Icon(Icons.login, size: 18),
+                      label: const Text("Masuk"),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.blue[600],
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
                     ),
                   ),
                 ],
@@ -177,17 +342,15 @@ class _SettingsScreenMinimalistState
   }
 
   Future<void> _logout() async {
-    final userNotifier = ref.read(userProvider.notifier);
-    await userNotifier.logout();
+    final familyUserNotifier = ref.read(familyUserProvider.notifier);
+    await familyUserNotifier.logout();
     print("User logged out");
   }
 
   void _editProfile() {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => const EditProfileScreen(),
-      ),
-    );
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (context) => const EditProfileScreen()));
   }
 
   Widget _buildNotificationToggle(TextTheme textTheme, AppSettings settings) {

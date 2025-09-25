@@ -1,4 +1,3 @@
-
 class Surah {
   final int suratId;
   final String nama;
@@ -23,14 +22,14 @@ class Surah {
 }
 
 class Ayat {
-  final int? ayatId; 
-  final int suratId; 
-  final int nomor; 
+  final int? ayatId;
+  final int suratId;
+  final int nomor;
   final String teksArab;
   final String teksLatin;
   final String teksIndonesia;
   final String audioUrl; // URL atau path ke file audio
-  
+
   Ayat({
     this.ayatId,
     required this.suratId,
