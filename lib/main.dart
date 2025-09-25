@@ -8,7 +8,7 @@ import 'database_migration_helper.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Handle database migration and initialization
+  // Handle databsase migration and initialization
   await _initializeDatabase();
 
   final isLoggedIn = await SharedPreferencesHelper.getLoginStatus();
@@ -27,6 +27,10 @@ Future<void> _initializeDatabase() async {
     // Create a test family account for development
     // This is safe to call multiple times - it won't create duplicates
     await DatabaseMigrationHelper.createTestFamily();
+
+    // Clear any existing test progress data to prevent interference
+    // DISABLED: Comment out to preserve progress across app restarts
+    // await DatabaseMigrationHelper.clearTestProgress();
 
     // Validate the database
     final isValid = await DatabaseMigrationHelper.validateV3Database();

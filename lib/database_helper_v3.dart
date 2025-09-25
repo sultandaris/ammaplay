@@ -474,6 +474,10 @@ class DatabaseHelperV3 {
   }) async {
     final db = await database;
 
+    print('=== DEBUG getSurahsWithProgress ===');
+    print('User ID received: $userId');
+    print('Level ID filter: $levelId');
+
     String whereClause = levelId != null ? 'WHERE s.id_level = ?' : '';
     List<dynamic> whereArgs = levelId != null ? [levelId] : [];
 
@@ -483,7 +487,9 @@ class DatabaseHelperV3 {
         s.*, 
         l.*,
         p.total_bintang,
-        p.terakhir_diperbarui
+        p.terakhir_diperbarui,
+        p.id_pengguna,
+        p.id_pengguna as progress_user_id
       FROM $surahTable s
       JOIN $levelTable l ON s.id_level = l.id_level
       LEFT JOIN $progresTable p ON s.id_surat = p.id_surat AND p.id_pengguna = ?
@@ -493,6 +499,11 @@ class DatabaseHelperV3 {
       [userId, ...whereArgs],
     );
 
+    print('Query result count: ${result.length}');
+    if (result.isNotEmpty) {
+      print('First result: ${result.first}');
+    }
+
     return result.map((row) {
       final surah = EnhancedSurah.fromMap(row);
       final level = Level.fromMap(row);
@@ -500,16 +511,24 @@ class DatabaseHelperV3 {
           ? ProgresPengguna.fromMap(row)
           : null;
 
+      print('Processing surah: ${surah.namaLatin}');
+      print('Row total_bintang: ${row['total_bintang']}');
+      print('Progress user ID from row: ${row['progress_user_id']}');
+      print('Created progres object: $progres');
+
       // Simple unlock logic: first surah in each level is always unlocked
       // Others are unlocked if previous surah has at least 1 star
       bool isUnlocked = surah.urutanDiLevel == 1;
 
-      return SurahWithProgress(
+      final surahWithProgress = SurahWithProgress(
         surah: surah,
         level: level,
         progres: progres,
         isUnlocked: isUnlocked,
       );
+
+      print('Final SurahWithProgress: $surahWithProgress');
+      return surahWithProgress;
     }).toList();
   }
 

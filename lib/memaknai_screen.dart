@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:video_player/video_player.dart';
-import 'hafalan_surat.dart'; // Import SurahInfo
+import 'models/family_models.dart';
 
 class MemaknaiScreen extends StatefulWidget {
-  final SurahInfo surahInfo;
+  final EnhancedSurah surah;
 
-  const MemaknaiScreen({super.key, required this.surahInfo});
+  const MemaknaiScreen({super.key, required this.surah});
 
   @override
   State<MemaknaiScreen> createState() => _MemaknaiScreenState();
@@ -21,6 +21,10 @@ class _MemaknaiScreenState extends State<MemaknaiScreen>
   bool _showControls = true;
   late AnimationController _fadeController;
   late Animation<double> _fadeAnimation;
+
+  // Completion tracking
+  bool _hasWatchedToEnd = false;
+  bool _hasCompletedMeaning = false;
 
   @override
   void initState() {
@@ -61,6 +65,57 @@ class _MemaknaiScreenState extends State<MemaknaiScreen>
     if (mounted) {
       setState(() {
         _isPlaying = _videoController!.value.isPlaying;
+      });
+
+      // Check if video has reached the end
+      final position = _videoController!.value.position;
+      final duration = _videoController!.value.duration;
+
+      if (duration.inMilliseconds > 0 &&
+          position.inMilliseconds >= (duration.inMilliseconds * 0.95)) {
+        // 95% watched counts as complete
+        _markVideoAsWatched();
+      }
+    }
+  }
+
+  // Mark video as watched to completion
+  void _markVideoAsWatched() {
+    if (!_hasWatchedToEnd) {
+      setState(() {
+        _hasWatchedToEnd = true;
+      });
+
+      print('DEBUG: Video watched to end. Completing meaning task.');
+      _completeMeaningTask();
+    }
+  }
+
+  // Complete meaning task
+  void _completeMeaningTask() {
+    if (!_hasCompletedMeaning) {
+      setState(() {
+        _hasCompletedMeaning = true;
+      });
+
+      print('DEBUG: Meaning task completed! Video watched to end.');
+
+      // Show completion message
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            '🎉 Selamat! Anda telah menonton video sampai selesai. Tugas memaknai selesai!',
+          ),
+          backgroundColor: Colors.green,
+          duration: Duration(seconds: 3),
+        ),
+      );
+
+      // Return to previous screen with success result after delay
+      Future.delayed(const Duration(seconds: 2), () {
+        if (mounted) {
+          Navigator.of(context).pop(true); // Return true to indicate completion
+        }
       });
     }
   }
@@ -244,7 +299,7 @@ class _MemaknaiScreenState extends State<MemaknaiScreen>
           ),
           const SizedBox(width: 12),
           Text(
-            'Surat ${widget.surahInfo.name}',
+            'Surat ${widget.surah.namaLatin}',
             style: const TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.bold,
@@ -391,7 +446,7 @@ class _MemaknaiScreenState extends State<MemaknaiScreen>
                   children: [
                     _buildControlButton(Icons.arrow_back, _toggleFullscreen),
                     Text(
-                      'Surat ${widget.surahInfo.name}',
+                      'Surat ${widget.surah.namaLatin}',
                       style: const TextStyle(
                         color: Colors.white,
                         fontSize: 18,
@@ -555,6 +610,37 @@ class _MemaknaiScreenState extends State<MemaknaiScreen>
               color: Color(0xFF666666),
             ),
           ),
+          // Progress indicator for video completion
+          if (_hasWatchedToEnd)
+            Padding(
+              padding: const EdgeInsets.only(top: 12.0),
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.green.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: Colors.green, width: 2),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.check_circle, color: Colors.green, size: 20),
+                    SizedBox(width: 8),
+                    Text(
+                      'Video telah ditonton sampai selesai!',
+                      style: TextStyle(
+                        color: Colors.green,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           const SizedBox(height: 16),
           Row(
             children: [

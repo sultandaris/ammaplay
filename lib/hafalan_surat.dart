@@ -3,21 +3,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'providers/family_user_provider.dart';
 import 'aksi_surat.dart';
-
-class SurahInfo {
-  final String name;
-  final bool isLocked;
-  final bool isCompleted;
-
-  SurahInfo({
-    required this.name,
-    this.isLocked = true,
-    this.isCompleted = false,
-  });
-}
-
-// Data statis ini tidak akan kita gunakan lagi, dihapus atau dikomentari
-// final List<SurahInfo> level1Surahs = [ ... ];
+import 'models/family_models.dart';
 
 class PilihSuratScreen extends ConsumerStatefulWidget {
   const PilihSuratScreen({super.key});
@@ -73,56 +59,48 @@ class _PilihSuratScreenState extends ConsumerState<PilihSuratScreen> {
                                 );
                               }
 
-                              final surahsAsyncValue = ref.watch(
-                                surahsWithProgressProvider(userId),
+                              // UNIFIED PROGRESS: Direct access to unified state - NO AsyncValue needed!
+                              final surahs = ref.watch(
+                                enhancedSurahsWithProgressByUserProvider(
+                                  userId,
+                                ),
                               );
+                              final isLoading = ref.watch(
+                                progressLoadingProvider,
+                              );
+                              final error = ref.watch(progressErrorProvider);
 
-                              return surahsAsyncValue.when(
-                                data: (surahs) {
-                                  if (surahs.isEmpty) {
-                                    return const Center(
-                                      child: Text(
-                                        'Tidak ada surat ditemukan di database.',
-                                        style: TextStyle(color: Colors.white),
-                                      ),
-                                    );
-                                  }
-
-                                  // Convert SurahWithProgress to SurahInfo for compatibility
-                                  final surahInfoList = surahs
-                                      .map(
-                                        (surahWithProgress) => SurahInfo(
-                                          name:
-                                              surahWithProgress.surah.namaLatin,
-                                          isLocked:
-                                              !surahWithProgress.isUnlocked,
-                                          isCompleted:
-                                              (surahWithProgress
-                                                      .progres
-                                                      ?.totalBintang ??
-                                                  0) >=
-                                              3,
-                                        ),
-                                      )
-                                      .toList();
-
-                                  return _SurahGrid(surahs: surahInfoList);
-                                },
-                                loading: () => const Center(
+                              // Simple conditional rendering - no .when() needed!
+                              if (isLoading) {
+                                return const Center(
                                   child: Padding(
                                     padding: EdgeInsets.all(50.0),
                                     child: CircularProgressIndicator(
                                       color: Colors.white,
                                     ),
                                   ),
-                                ),
-                                error: (error, stack) => Center(
+                                );
+                              }
+
+                              if (error != null) {
+                                return Center(
                                   child: Text(
                                     'Error: $error',
                                     style: const TextStyle(color: Colors.white),
                                   ),
-                                ),
-                              );
+                                );
+                              }
+
+                              if (surahs.isEmpty) {
+                                return const Center(
+                                  child: Text(
+                                    'Tidak ada surat ditemukan di database.',
+                                    style: TextStyle(color: Colors.white),
+                                  ),
+                                );
+                              }
+
+                              return _SurahGrid(surahs: surahs);
                             },
                           ),
                           const SizedBox(height: 24),
@@ -247,8 +225,7 @@ class _LevelBanner extends StatelessWidget {
 }
 
 class _SurahGrid extends StatelessWidget {
-  // ... (kode sama seperti sebelumnya) ...
-  final List<SurahInfo> surahs;
+  final List<SurahWithProgress> surahs;
 
   const _SurahGrid({required this.surahs});
 
@@ -265,22 +242,31 @@ class _SurahGrid extends StatelessWidget {
       ),
       itemCount: surahs.length,
       itemBuilder: (context, index) {
-        final surah = surahs[index];
-        return _SurahCard(surah: surah);
+        final surahWithProgress = surahs[index];
+        return _SurahCard(surahWithProgress: surahWithProgress);
       },
     );
   }
 }
 
 class _SurahCard extends StatelessWidget {
-  final SurahInfo surah;
+  final SurahWithProgress surahWithProgress;
 
-  const _SurahCard({required this.surah});
+  const _SurahCard({required this.surahWithProgress});
 
   @override
   Widget build(BuildContext context) {
+    final surah = surahWithProgress.surah;
+    final isLocked = !surahWithProgress.isUnlocked;
+    final totalStars = surahWithProgress.progres?.totalBintang ?? 0;
+
+    // Debug print untuk melihat nilai progress
+    print(
+      'DEBUG: Surah ${surah.namaLatin} - Total Stars: $totalStars, Progress: ${surahWithProgress.progres}',
+    );
+
     // Tampilan Kartu Terkunci (tidak bisa di-klik)
-    if (surah.isLocked) {
+    if (isLocked) {
       return Container(
         decoration: BoxDecoration(
           color: const Color(0xFF08363D).withOpacity(0.8),
@@ -306,11 +292,12 @@ class _SurahCard extends StatelessWidget {
         ), // Samakan radius untuk efek ripple
         onTap: () {
           // Aksi ketika kartu di-tap
-          print('Surat ${surah.name} ditekan!');
+          print('Surat ${surah.namaLatin} ditekan!');
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => SurahActionScreen(surah: surah),
+              builder: (context) =>
+                  SurahActionScreen(surahWithProgress: surahWithProgress),
             ),
           );
         },
@@ -331,38 +318,33 @@ class _SurahCard extends StatelessWidget {
                 ),
               ),
               Text(
-                surah.name,
+                surah.namaLatin,
                 textAlign: TextAlign.center,
                 style: const TextStyle(
                   color: Color(0xFF6B4F1A),
                   fontWeight: FontWeight.bold,
-                  fontSize: 18,
+                  fontSize: 16,
                 ),
               ),
-              if (surah.isCompleted)
-                const Padding(
-                  padding: EdgeInsets.only(top: 4.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.star_rounded,
-                        color: Color(0xFF6B4F1A),
-                        size: 18,
-                      ),
-                      Icon(
-                        Icons.star_rounded,
-                        color: Color(0xFF6B4F1A),
-                        size: 18,
-                      ),
-                      Icon(
-                        Icons.star_rounded,
-                        color: Color(0xFF6B4F1A),
-                        size: 18,
-                      ),
-                    ],
-                  ),
+              // Tampilkan bintang sesuai dengan progress yang sudah dicapai
+              // Selalu tampilkan bintang untuk menunjukkan progress visual
+              Padding(
+                padding: const EdgeInsets.only(top: 4.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: List.generate(3, (index) {
+                    return Icon(
+                      index < totalStars
+                          ? Icons.star_rounded
+                          : Icons.star_outline_rounded,
+                      color: index < totalStars
+                          ? const Color(0xFF6B4F1A)
+                          : const Color(0xFF6B4F1A).withOpacity(0.3),
+                      size: 16,
+                    );
+                  }),
                 ),
+              ),
             ],
           ),
         ),

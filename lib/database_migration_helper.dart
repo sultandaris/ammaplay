@@ -148,14 +148,9 @@ class DatabaseMigrationHelper {
           "Validation: Found ${surahsWithProgress.length} surahs with progress data",
         );
 
-        // Test progress update
-        final progressUpdated = await db.updateProgress(
-          testUser.idPengguna!,
-          114,
-          3,
-        );
+        // Skip automatic progress insertion to avoid test data pollution
         developer.log(
-          "Validation: Progress update ${progressUpdated ? 'successful' : 'failed'}",
+          "Validation: Database structure verified without inserting test progress",
         );
 
         return true;
@@ -203,6 +198,39 @@ class DatabaseMigrationHelper {
       developer.log("===============================");
     } catch (e) {
       developer.log("Error printing stats: $e");
+    }
+  }
+
+  /// Clear all progress data for test family - useful for debugging
+  static Future<void> clearTestProgress() async {
+    try {
+      final db = DatabaseHelperV3.instance;
+
+      // Login with test family credentials to get user data
+      const testEmail = "test@ammaplay.com";
+      const testPassword = "test123";
+
+      final testUser = await db.loginFamily(testEmail, testPassword);
+
+      if (testUser != null && testUser.idPengguna != null) {
+        // Clear all progress by deleting records
+        final database = await db.database;
+        await database.execute(
+          '''
+          DELETE FROM progres_pengguna 
+          WHERE id_pengguna = ?
+        ''',
+          [testUser.idPengguna],
+        );
+
+        developer.log(
+          "✓ Cleared all test progress data for user: ${testUser.namaPengguna}",
+        );
+      } else {
+        developer.log("❌ No test family found to clear");
+      }
+    } catch (e) {
+      developer.log("❌ Error clearing test progress: $e");
     }
   }
 }

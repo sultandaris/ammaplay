@@ -4,6 +4,7 @@ import '../widgets/app_background.dart';
 import '../router/app_router.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '/hafalan_surat.dart';
+import 'kontrol_orang_tua_screen.dart';
 
 class MainMenuScreen extends StatefulWidget {
   const MainMenuScreen({super.key});
@@ -70,7 +71,12 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
             const SizedBox(width: 16),
             GestureDetector(
               onTap: () {
-                Navigator.pushNamed(context, '/info');
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const KontrolOrangTuaScreen(),
+                  ),
+                );
               },
               child: _buildSmallButton(Icons.info_outline),
             ),

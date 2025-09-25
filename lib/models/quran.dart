@@ -1,26 +1,3 @@
-class Surah {
-  final int suratId;
-  final String nama;
-  final String arti;
-  final int jumlahAyat;
-
-  Surah({
-    required this.suratId,
-    required this.nama,
-    required this.arti,
-    required this.jumlahAyat,
-  });
-
-  Map<String, dynamic> toMap() {
-    return {
-      'surat_id': suratId,
-      'nama': nama,
-      'arti': arti,
-      'jumlah_ayat': jumlahAyat,
-    };
-  }
-}
-
 class Ayat {
   final int? ayatId;
   final int suratId;

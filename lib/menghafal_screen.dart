@@ -8,8 +8,8 @@ import 'package:string_similarity/string_similarity.dart';
 import 'dart:async';
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
-import 'database_helper.dart';
-import 'hafalan_surat.dart';
+import 'database_helper_v3.dart';
+import 'models/family_models.dart';
 
 // Data class for text comparison results
 class TextComparison {
@@ -25,9 +25,9 @@ class TextComparison {
 }
 
 class MenghafalScreen extends StatefulWidget {
-  final SurahInfo surahInfo;
+  final EnhancedSurah surah;
 
-  const MenghafalScreen({super.key, required this.surahInfo});
+  const MenghafalScreen({super.key, required this.surah});
 
   @override
   State<MenghafalScreen> createState() => _MenghafalScreenState();
@@ -35,7 +35,7 @@ class MenghafalScreen extends StatefulWidget {
 
 class _MenghafalScreenState extends State<MenghafalScreen>
     with TickerProviderStateMixin {
-  final dbHelper = DatabaseHelper.instance();
+  final dbHelper = DatabaseHelperV3.instance;
   FlutterSoundRecorder? _audioRecorder;
   final _audioPlayer = AudioPlayer();
 
@@ -71,6 +71,10 @@ class _MenghafalScreenState extends State<MenghafalScreen>
   bool _showResult = false;
   String _expectedLatin = '';
   List<TextComparison> _wordComparisons = [];
+
+  // Completion tracking
+  Set<int> _correctAyats = {}; // Track which ayats have been correctly recited
+  bool _hasCompletedMemorization = false;
 
   @override
   void initState() {
@@ -150,24 +154,22 @@ class _MenghafalScreenState extends State<MenghafalScreen>
   }
 
   Future<void> _loadSurahData() async {
-    final surahList = await dbHelper.querySemuaSurah();
-    final surah = surahList.firstWhere(
-      (s) => s['nama'] == widget.surahInfo.name,
-      orElse: () => {},
-    );
-
-    if (surah.isNotEmpty) {
-      final suratId = surah['surat_id'];
-      final ayat = await dbHelper.queryAyatBySurah(suratId);
+    try {
+      final ayat = await dbHelper.queryAyatBySurah(widget.surah.idSurat);
       setState(() {
-        _surahDetail = surah;
+        _surahDetail = {
+          'nama': widget.surah.namaLatin,
+          'arti': widget.surah.artiNama,
+          'jumlah_ayat': widget.surah.jumlahAyat,
+        };
         _ayatList = ayat;
         _isLoading = false;
       });
-    } else {
+    } catch (e) {
       setState(() {
         _isLoading = false;
       });
+      print('Error loading surah data: $e');
     }
   }
 
@@ -362,8 +364,14 @@ class _MenghafalScreenState extends State<MenghafalScreen>
       String message;
       if (_pronunciationScore >= 90) {
         message = 'Luar biasa! Pelafalan Anda sangat akurat!';
+        _markAyatAsCorrect(
+          _currentAyatIndex,
+        ); // Mark as correct if score >= 90%
       } else if (_pronunciationScore >= 80) {
         message = 'Bagus! Hampir sempurna.';
+        _markAyatAsCorrect(
+          _currentAyatIndex,
+        ); // Mark as correct if score >= 80%
       } else if (_pronunciationScore >= 70) {
         message = 'Cukup baik. Ada beberapa kata yang perlu diperbaiki.';
       } else {
@@ -460,6 +468,58 @@ class _MenghafalScreenState extends State<MenghafalScreen>
         _isPlayingReference = false;
       });
     }
+  }
+
+  // Mark ayat as correctly recited
+  void _markAyatAsCorrect(int ayatIndex) {
+    if (!_correctAyats.contains(ayatIndex)) {
+      setState(() {
+        _correctAyats.add(ayatIndex);
+      });
+
+      print(
+        'DEBUG: Ayat ${ayatIndex + 1} marked as correct. Total correct: ${_correctAyats.length}/${_ayatList.length}',
+      );
+
+      // Check if all ayats have been correctly recited
+      if (_correctAyats.length >= _ayatList.length &&
+          !_hasCompletedMemorization) {
+        _completeMemorizationTask();
+      }
+    }
+  }
+
+  // Complete memorization task
+  void _completeMemorizationTask() {
+    setState(() {
+      _hasCompletedMemorization = true;
+    });
+
+    print('DEBUG: Memorization task completed! All ayats correctly recited.');
+
+    // Show completion message
+    Future.delayed(const Duration(seconds: 2), () {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              '🎉 Selamat! Anda telah menghafal semua ayat dengan benar. Tugas menghafal selesai!',
+            ),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 3),
+          ),
+        );
+
+        // Return to previous screen with success result after delay
+        Future.delayed(const Duration(seconds: 2), () {
+          if (mounted) {
+            Navigator.of(
+              context,
+            ).pop(true); // Return true to indicate completion
+          }
+        });
+      }
+    });
   }
 
   @override
@@ -620,6 +680,30 @@ class _MenghafalScreenState extends State<MenghafalScreen>
               fontWeight: FontWeight.bold,
             ),
           ),
+          // Progress indicator for memorization
+          if (_correctAyats.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(top: 8.0),
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(15),
+                  border: Border.all(color: const Color(0xFFF9D463), width: 1),
+                ),
+                child: Text(
+                  '${_correctAyats.length} dari ${_ayatList.length} ayat sudah benar',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ),
           const SizedBox(height: 16),
           AnimatedBuilder(
             animation: _waveAnimation,
