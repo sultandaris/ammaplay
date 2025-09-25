@@ -273,10 +273,44 @@ class _SurahCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(20),
           border: Border.all(color: const Color(0xFF246C79), width: 3),
         ),
-        child: const Icon(
-          Icons.lock_rounded,
-          color: Color(0xFFF9D463),
-          size: 48,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(
+              Icons.lock_rounded,
+              color: Color(0xFFF9D463),
+              size: 32,
+            ),
+            const SizedBox(height: 6),
+            Text(
+              'Surat',
+              style: TextStyle(
+                color: Colors.white.withOpacity(0.6),
+                fontSize: 12,
+              ),
+            ),
+            Text(
+              surah.namaLatin,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: Colors.white.withOpacity(0.8),
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
+              ),
+            ),
+            const SizedBox(height: 4),
+            // Tampilkan bintang kosong untuk surat terkunci
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(3, (index) {
+                return Icon(
+                  Icons.star_outline_rounded,
+                  color: Colors.white.withOpacity(0.3),
+                  size: 14,
+                );
+              }),
+            ),
+          ],
         ),
       );
     }

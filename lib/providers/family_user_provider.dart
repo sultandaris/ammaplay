@@ -419,10 +419,25 @@ class UnifiedProgressState {
 class UnifiedProgressNotifier extends StateNotifier<UnifiedProgressState> {
   final DatabaseHelperV3 _databaseHelper;
   final Ref _ref;
+  int? _currentUserId;
 
   UnifiedProgressNotifier(this._databaseHelper, this._ref)
     : super(const UnifiedProgressState()) {
     _initializeData();
+    // Watch for user changes
+    _ref.listen<FamilyUser?>(currentFamilyUserProvider, (previous, next) {
+      final newUserId = next?.idPengguna;
+      if (newUserId != _currentUserId) {
+        print('DEBUG: User changed from $_currentUserId to $newUserId');
+        _currentUserId = newUserId;
+        if (newUserId != null) {
+          _reloadProgressForNewUser(newUserId);
+        } else {
+          // Clear progress when no user is logged in
+          state = const UnifiedProgressState();
+        }
+      }
+    });
   }
 
   // Initialize data saat provider pertama kali digunakan
@@ -430,12 +445,26 @@ class UnifiedProgressNotifier extends StateNotifier<UnifiedProgressState> {
     final user = _ref.read(currentFamilyUserProvider);
     if (user == null) return;
 
+    _currentUserId = user.idPengguna;
     state = state.copyWith(isLoading: true, error: null);
 
     try {
       await _loadAllProgressData(user.idPengguna!);
     } catch (e) {
       print('Error initializing progress data: $e');
+      state = state.copyWith(isLoading: false, error: e.toString());
+    }
+  }
+
+  // Reload progress data when user changes
+  Future<void> _reloadProgressForNewUser(int userId) async {
+    print('DEBUG: Reloading progress for user $userId');
+    state = state.copyWith(isLoading: true, error: null);
+
+    try {
+      await _loadAllProgressData(userId);
+    } catch (e) {
+      print('Error reloading progress data for user $userId: $e');
       state = state.copyWith(isLoading: false, error: e.toString());
     }
   }

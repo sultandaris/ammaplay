@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'database_helper.dart';
-import 'providers/user_provider.dart';
+import 'providers/family_user_provider.dart';
 
 class SignUpScreen extends ConsumerStatefulWidget {
   const SignUpScreen({super.key});
@@ -15,17 +14,23 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _usernameController = TextEditingController();
-  late final dbHelper = DatabaseHelper.instance();
+  final _pinController = TextEditingController();
 
   void _processSignUp() async {
     if (_formKey.currentState!.validate()) {
       final email = _emailController.text;
       final password = _passwordController.text;
-      final username = _usernameController.text.isEmpty ? null : _usernameController.text;
+      final username = _usernameController.text.isEmpty ? 'User' : _usernameController.text;
+      final pin = _pinController.text;
 
-      // Use user provider for signup
-      final userNotifier = ref.read(userProvider.notifier);
-      final success = await userNotifier.signup(email, password, username: username);
+      // Use family user provider for signup
+      final familyUserNotifier = ref.read(familyUserProvider.notifier);
+      final success = await familyUserNotifier.createFamilyAccount(
+        namaPengguna: username,
+        email: email,
+        password: password,
+        pinOrangtua: pin,
+      );
 
       if (mounted) {
         if (success) {
@@ -37,7 +42,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
           Navigator.of(context).pop();
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Email ini sudah terdaftar.')),
+            const SnackBar(content: Text('Email ini sudah terdaftar atau terjadi kesalahan.')),
           );
         }
       }
@@ -102,6 +107,30 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                 validator: (value) {
                   if (value == null || value.isEmpty || value.length < 6) {
                     return 'Password minimal harus 6 karakter';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _pinController,
+                decoration: const InputDecoration(
+                  labelText: 'PIN Orang Tua (4 digit)',
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.security),
+                ),
+                obscureText: true,
+                keyboardType: TextInputType.number,
+                maxLength: 4,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'PIN orang tua harus diisi';
+                  }
+                  if (value.length != 4) {
+                    return 'PIN harus terdiri dari 4 digit';
+                  }
+                  if (!RegExp(r'^\d+$').hasMatch(value)) {
+                    return 'PIN hanya boleh berisi angka';
                   }
                   return null;
                 },

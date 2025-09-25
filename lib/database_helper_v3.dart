@@ -504,32 +504,68 @@ class DatabaseHelperV3 {
       print('First result: ${result.first}');
     }
 
-    return result.map((row) {
-      final surah = EnhancedSurah.fromMap(row);
-      final level = Level.fromMap(row);
-      final progres = row['total_bintang'] != null
-          ? ProgresPengguna.fromMap(row)
-          : null;
+    // Process results and determine unlock status
+    List<SurahWithProgress> surahList = [];
+    Map<int, List<Map<String, dynamic>>> surahsByLevel = {};
+    
+    // Group surahs by level first
+    for (var row in result) {
+      final levelId = row['id_level'] as int;
+      if (surahsByLevel[levelId] == null) {
+        surahsByLevel[levelId] = [];
+      }
+      surahsByLevel[levelId]!.add(row);
+    }
 
-      print('Processing surah: ${surah.namaLatin}');
-      print('Row total_bintang: ${row['total_bintang']}');
-      print('Progress user ID from row: ${row['progress_user_id']}');
-      print('Created progres object: $progres');
+    // Process each level and determine unlock status
+    for (var levelEntry in surahsByLevel.entries) {
+      final levelSurahs = levelEntry.value;
+      
+      // Sort by urutan_di_level to ensure correct order
+      levelSurahs.sort((a, b) => (a['urutan_di_level'] as int).compareTo(b['urutan_di_level'] as int));
+      
+      for (int i = 0; i < levelSurahs.length; i++) {
+        final row = levelSurahs[i];
+        final surah = EnhancedSurah.fromMap(row);
+        final level = Level.fromMap(row);
+        final progres = row['total_bintang'] != null
+            ? ProgresPengguna.fromMap(row)
+            : null;
 
-      // Simple unlock logic: first surah in each level is always unlocked
-      // Others are unlocked if previous surah has at least 1 star
-      bool isUnlocked = surah.urutanDiLevel == 1;
+        print('Processing surah: ${surah.namaLatin} (Level: ${level.namaLevel}, Order: ${surah.urutanDiLevel})');
+        print('Row total_bintang: ${row['total_bintang']}');
+        print('Created progres object: $progres');
 
-      final surahWithProgress = SurahWithProgress(
-        surah: surah,
-        level: level,
-        progres: progres,
-        isUnlocked: isUnlocked,
-      );
+        // Unlock logic:
+        // 1. First surah in each level is always unlocked
+        // 2. Other surahs are unlocked if previous surah has 3 stars (perfect completion)
+        bool isUnlocked = false;
+        
+        if (surah.urutanDiLevel == 1) {
+          // First surah in level is always unlocked
+          isUnlocked = true;
+        } else if (i > 0) {
+          // Check if previous surah has 3 stars (perfect completion)
+          final previousRow = levelSurahs[i - 1];
+          final previousStars = previousRow['total_bintang'] as int?;
+          isUnlocked = (previousStars != null && previousStars >= 3);
+          
+          print('Previous surah stars: $previousStars, Current surah ${surah.namaLatin} unlocked: $isUnlocked (requires 3 stars for unlock)');
+        }
 
-      print('Final SurahWithProgress: $surahWithProgress');
-      return surahWithProgress;
-    }).toList();
+        final surahWithProgress = SurahWithProgress(
+          surah: surah,
+          level: level,
+          progres: progres,
+          isUnlocked: isUnlocked,
+        );
+
+        print('Final SurahWithProgress: ${surah.namaLatin} - Unlocked: $isUnlocked');
+        surahList.add(surahWithProgress);
+      }
+    }
+
+    return surahList;
   }
 
   // --- PROGRESS METHODS ---

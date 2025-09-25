@@ -489,6 +489,38 @@ class _MenghafalScreenState extends State<MenghafalScreen>
     }
   }
 
+  // Complete all ayats instantly (Developer feature)
+  void _completeAllAyatsInstantly() {
+    setState(() {
+      // Mark all ayats as correct
+      _correctAyats.clear();
+      for (int i = 0; i < _ayatList.length; i++) {
+        _correctAyats.add(i);
+      }
+      _hasCompletedMemorization = true;
+    });
+
+    print('DEBUG: All ayats completed instantly! Developer mode activated.');
+
+    // Show instant completion message
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text(
+          '⚡ Mode Developer: Semua ayat telah diselesaikan secara instan!',
+        ),
+        backgroundColor: Colors.orange,
+        duration: Duration(seconds: 2),
+      ),
+    );
+
+    // Return to previous screen with success result after short delay
+    Future.delayed(const Duration(seconds: 1), () {
+      if (mounted) {
+        Navigator.of(context).pop(true); // Return true to indicate completion
+      }
+    });
+  }
+
   // Complete memorization task
   void _completeMemorizationTask() {
     setState(() {
@@ -601,7 +633,43 @@ class _MenghafalScreenState extends State<MenghafalScreen>
             fontWeight: FontWeight.bold,
           ),
         ),
-        SvgPicture.asset('assets/amma_play_logo.svg', height: 35),
+        Row(
+          children: [
+            // Developer button to complete memorization instantly
+            GestureDetector(
+              onTap: _completeAllAyatsInstantly,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.orange.withOpacity(0.8),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.orange, width: 1),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.flash_on,
+                      color: Colors.white,
+                      size: 16,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      'Selesai Instan',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            SvgPicture.asset('assets/amma_play_logo.svg', height: 35),
+          ],
+        ),
       ],
     );
   }
