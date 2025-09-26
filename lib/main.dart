@@ -20,7 +20,7 @@ Future<void> _initializeDatabase() async {
   try {
     print("Initializing Database V3...");
 
-    // Initialize the V3 database (this will create it if it doesn't exist)
+    // Initialize the V3 database (this will create it if it doesn't exist) 
     final dbV3 = DatabaseHelperV3.instance;
     await dbV3.database;
 

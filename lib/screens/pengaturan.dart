@@ -345,6 +345,11 @@ class _SettingsScreenMinimalistState
     final familyUserNotifier = ref.read(familyUserProvider.notifier);
     await familyUserNotifier.logout();
     print("User logged out");
+    
+    // Navigate back to auth screen after logout
+    if (mounted) {
+      context.go(AppRoutes.auth);
+    }
   }
 
   void _editProfile() {

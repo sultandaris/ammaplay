@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'providers/family_user_provider.dart';
+import 'router/app_router.dart';
 
 class SignUpScreen extends ConsumerStatefulWidget {
   const SignUpScreen({super.key});
@@ -39,7 +41,8 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
               content: Text('Pendaftaran berhasil! Anda sudah login.'),
             ),
           );
-          Navigator.of(context).pop();
+          // Navigate to main menu after successful signup
+          context.go(AppRoutes.mainMenu);
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Email ini sudah terdaftar atau terjadi kesalahan.')),

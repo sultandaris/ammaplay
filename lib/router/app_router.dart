@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../screens/splash_screen.dart';
+import '../screens/auth_screen.dart';
 import '../screens/main_menu_screen.dart';
 import '../screens/pengaturan.dart';
 import '../login_screen.dart' as login;
@@ -9,10 +10,19 @@ import '../signup_screen.dart' as signup;
 // Route paths
 class AppRoutes {
   static const splash = '/';
+  static const auth = '/auth';
   static const mainMenu = '/main-menu';
   static const settings = '/settings';
   static const login = '/login';
   static const signup = '/signup';
+}
+
+// Authentication guard function
+bool _isUserLoggedIn() {
+  // This will be called to check authentication status
+  // In a real app, you might need to access the provider here
+  // For now, we'll rely on the splash screen navigation
+  return true; // Will be overridden by splash screen logic
 }
 
 // Router configuration
@@ -24,6 +34,13 @@ final GoRouter appRouter = GoRouter(
       path: AppRoutes.splash,
       name: 'splash',
       builder: (context, state) => const SplashScreen(),
+    ),
+
+    // Auth Screen - Login/Signup selection
+    GoRoute(
+      path: AppRoutes.auth,
+      name: 'auth',
+      builder: (context, state) => const AuthScreen(),
     ),
 
     // Main Menu Screen

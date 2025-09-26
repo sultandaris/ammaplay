@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'providers/family_user_provider.dart';
+import 'router/app_router.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -26,8 +28,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         if (success) {
           ScaffoldMessenger.of(
             context,
-          ).showSnackBar(const SnackBar(content: Text('Login berhasil!.')));
-          Navigator.of(context).pop();
+          ).showSnackBar(const SnackBar(content: Text('Login berhasil!')));
+          // Navigate to main menu after successful login
+          context.go(AppRoutes.mainMenu);
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Email atau password salah.')),
