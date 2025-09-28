@@ -126,20 +126,32 @@ class _PilihSuratScreenState extends ConsumerState<PilihSuratScreen> {
               fit: BoxFit.contain,
             ),
           ),
-          const Text(
-            'Pilih Surat',
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-              fontSize: 26,
-              shadows: [
-                Shadow(
-                  blurRadius: 2.0,
-                  color: Colors.black26,
-                  offset: Offset(2.0, 2.0),
+          // Outlined 'Pilih Surat'
+          Stack(
+            alignment: Alignment.center,
+            children: [
+              Text(
+                'Pilih Surat',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 36,
+                  fontWeight: FontWeight.bold,
+                  foreground: Paint()
+                    ..style = PaintingStyle.stroke
+                    ..strokeWidth = 4
+                    ..color = const Color.fromARGB(255, 215, 123, 2),
                 ),
-              ],
-            ),
+              ),
+              Text(
+                'Pilih Surat',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: const Color.fromARGB(255, 255, 255, 255),
+                  fontSize: 36,
+                ),
+              ),
+            ],
           ),
           SvgPicture.asset(
             'assets/amma_play_logo.svg',
