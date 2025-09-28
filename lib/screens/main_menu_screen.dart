@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import '../widgets/app_background.dart';
+import '../widgets/app_background_no_clouds.dart';
 import '../router/app_router.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '/hafalan_surat.dart';
@@ -27,28 +27,35 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
     return Scaffold(
       body: Stack(
         children: [
-          const AppBackground(),
+          const AppBackgroundNoClouds(),
+          // Logo Amma Play - posisi tetap
           SafeArea(
-            child: Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.only(top: 20.0),
-                  child: SvgPicture.asset(
-                    'assets/amma_play_logo.svg',
-                    width: MediaQuery.of(context).size.width * 0.6,
-                  ),
+            child: Padding(
+              padding: const EdgeInsets.only(top: 20.0),
+              child: Align(
+                alignment: Alignment.topCenter,
+                child: SvgPicture.asset(
+                  'assets/amma_play_logo.svg',
+                  width: MediaQuery.of(context).size.width * 0.6,
                 ),
-                const SizedBox(height: 20),
-                if (!_isMenuOpen) _buildDefaultMenu(),
-              ],
+              ),
             ),
           ),
+          // Menu content
+          if (!_isMenuOpen)
+            SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.only(top: 120.0), // Space untuk logo
+                child: _buildDefaultMenu(),
+              ),
+            ),
 
-          Positioned(
-            bottom: 60,
-            left: 20,
-            child: SvgPicture.asset('assets/character.svg', width: 150),
-          ),
+          if (!_isMenuOpen)
+            Positioned(
+              bottom: 60,
+              left: 20,
+              child: SvgPicture.asset('assets/character.svg', width: 150),
+            ),
 
           if (_isMenuOpen) _buildPopupMenu(),
         ],
@@ -59,6 +66,7 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
   Widget _buildDefaultMenu() {
     return Column(
       children: [
+        SizedBox(height: MediaQuery.of(context).size.height * 0.10), // Jarak sebagai persentase dari tinggi layar
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -66,7 +74,7 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
               onTap: () {
                 context.push(AppRoutes.settings);
               },
-              child: _buildSmallButton(Icons.settings),
+              child: _buildSmallButton('assets/settingakun.svg'),
             ),
             const SizedBox(width: 16),
             GestureDetector(
@@ -78,14 +86,14 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
                   ),
                 );
               },
-              child: _buildSmallButton(Icons.info_outline),
+              child: _buildSmallButton('assets/settingortu.svg'),
             ),
           ],
         ),
         const SizedBox(height: 20),
         GestureDetector(
           onTap: _toggleMenu,
-          child: _buildLargeMenuButton("PLAY"),
+          child: _buildLargeMenuButton("MENU"),
         ),
         const SizedBox(height: 20),
         // Kartu Hafalan
@@ -95,100 +103,175 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
   }
 
   Widget _buildPopupMenu() {
-    return Center(
-      child: Container(
-        padding: const EdgeInsets.all(20),
-        margin: const EdgeInsets.symmetric(horizontal: 40),
-        decoration: BoxDecoration(
-          color: const Color(0xFFF9D577),
-          borderRadius: BorderRadius.circular(30),
-          border: Border.all(color: Colors.white, width: 8),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
+    return Padding(
+      padding: const EdgeInsets.only(top: 100.0), // Space untuk logo
+      child: Center(
+        child: Stack(
+          alignment: Alignment.center,
           children: [
-            const Text(
-              "AMMA PLAY",
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: Colors.brown,
-              ),
+            // Background mainmenuelement.svg
+            SvgPicture.asset(
+              'assets/mainmenuelement.svg',
+              width: MediaQuery.of(context).size.width * 0.85,
+              fit: BoxFit.contain,
             ),
-            const SizedBox(height: 15),
-            _buildMenuOptionButton("Hafalan", const Color(0xFF5AB6A8), () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => PilihSuratScreen()),
-              );
-            }),
-            const SizedBox(height: 10),
-            _buildMenuOptionButton("Bermain", const Color(0xFF5AB6A8), () {
-              Navigator.pushNamed(context, '/bermain');
-            }),
-            const SizedBox(height: 10),
-            _buildMenuOptionButton("Karakter", const Color(0xFF5AB6A8), () {
-              Navigator.pushNamed(context, '/karakter');
-            }),
-            const SizedBox(height: 10),
-            _buildMenuOptionButton("Kelas", const Color(0xFF5AB6A8), () {
-              Navigator.pushNamed(context, '/kelas');
-            }),
-            const SizedBox(height: 20),
-            // Tombol Close
-            GestureDetector(
-              onTap: _toggleMenu, // Panggil fungsi untuk menutup menu
+          // Posisi menu items sesuai dengan 4 menustair dalam mainmenuelement
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Tulisan MENU
+              Text(
+                "MENU",
+                style: const TextStyle(
+                  fontFamily: 'Swiss721',
+                  fontSize: 45,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                  letterSpacing: 1,
+                  shadows: [
+                    Shadow(offset: Offset(-1.5, -1.5), color: Color(0xFFD58900)),
+                    Shadow(offset: Offset(1.5, -1.5), color: Color(0xFFD58900)),
+                    Shadow(offset: Offset(1.5, 1.5), color: Color(0xFFD58900)),
+                    Shadow(offset: Offset(-1.5, 1.5), color: Color(0xFFD58900)),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 25), // Space setelah tulisan MENU
+              // Menu item 1 - Hafalan
+              GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => PilihSuratScreen()),
+                  );
+                },
+                child: _buildMenuItemText("Hafalan"),
+              ),
+              const SizedBox(height: 18),
+              // Menu item 2 - Bermain
+              GestureDetector(
+                onTap: () {
+                  Navigator.pushNamed(context, '/bermain');
+                },
+                child: _buildMenuItemText("Bermain"),
+              ),
+              const SizedBox(height: 18),
+              // Menu item 3 - Karakter
+              GestureDetector(
+                onTap: () {
+                  Navigator.pushNamed(context, '/karakter');
+                },
+                child: _buildMenuItemText("Karakter"),
+              ),
+              const SizedBox(height: 18),
+              // Menu item 4 - Kelas
+              GestureDetector(
+                onTap: () {
+                  Navigator.pushNamed(context, '/kelas');
+                },
+                child: _buildMenuItemText("Kelas"),
+              ),
+              const SizedBox(height: 50),
+            ],
+          ),
+          // Tombol Close di bawah
+          Positioned(
+            bottom: 0, // Dipindah ke posisi yang lebih aman
+            child: GestureDetector(
+              onTap: _toggleMenu,
               child: const CircleAvatar(
-                radius: 25,
-                backgroundColor: Colors.red,
+                radius: 25, // Diperbesar kembali agar lebih jelas
+                backgroundColor: Color.fromARGB(255, 204, 86, 77),
                 child: Icon(Icons.close, color: Colors.white, size: 30),
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
+    ),
     );
   }
 
-  Widget _buildSmallButton(IconData icon) {
+  Widget _buildMenuItemText(String text) {
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        // Background mainmenustair.svg
+        SvgPicture.asset(
+          'assets/mainmenustair.svg',
+          width: 255, // Diperbesar untuk mengikuti proporsi gambar
+          fit: BoxFit.contain,
+        ),
+        // Text di atas background
+        Text(
+          text,
+          style: const TextStyle(
+            fontFamily: 'Sunday Magic',
+            fontSize: 38, // Sedikit dikecilkan agar proporsional
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+            letterSpacing: 3,
+            shadows: [
+              Shadow(offset: Offset(-1, -1), color: Color(0xFF387C87)),
+              Shadow(offset: Offset(1, -1), color: Color(0xFF387C87)),
+              Shadow(offset: Offset(1, 1), color: Color(0xFF387C87)),
+              Shadow(offset: Offset(-1, 1), color: Color(0xFF387C87)),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSmallButton(String svgAsset) {
     return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: const Color(0xFFF9D577),
-        border: Border.all(color: Colors.white.withOpacity(0.5), width: 3),
+      width: 60,
+      height: 60,
+      child: SvgPicture.asset(
+        svgAsset,
+        fit: BoxFit.contain,
       ),
-      child: Icon(icon, color: Colors.white, size: 24),
     );
   }
 
   Widget _buildLargeMenuButton(String text) {
-    return Container(
-      width: 250,
-      padding: const EdgeInsets.symmetric(vertical: 15),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF9D577),
-        borderRadius: BorderRadius.circular(50),
-        border: Border.all(color: Colors.white.withOpacity(0.8), width: 8),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.2),
-            blurRadius: 5,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Center(
-        child: Text(
-          text,
-          style: const TextStyle(
-            fontSize: 28,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-            letterSpacing: 2,
-          ),
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        // Elemen besar (background)
+        SvgPicture.asset(
+          'assets/menuelement.svg',
+          width: 300,
+          fit: BoxFit.contain,
         ),
-      ),
+        // Elemen kecil dengan tulisan PLAY
+        Stack(
+          alignment: Alignment.center,
+          children: [
+            SvgPicture.asset(
+              'assets/menustair.svg',
+              width: 200,
+              fit: BoxFit.contain,
+            ),
+            Text(
+              text,
+              style: const TextStyle(
+                fontFamily: 'Swiss721',
+                fontSize: 36,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+                letterSpacing: 2,
+                shadows: const [
+                  Shadow(offset: Offset(-1.5, -1.5), color: Color(0xFFD58900)),
+                  Shadow(offset: Offset(1.5, -1.5), color: Color(0xFFD58900)),
+                  Shadow(offset: Offset(1.5, 1.5), color: Color(0xFFD58900)),
+                  Shadow(offset: Offset(-1.5, 1.5), color: Color(0xFFD58900)),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 
@@ -223,28 +306,5 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
     );
   }
 
-  Widget _buildMenuOptionButton(String text, Color color, VoidCallback onTap) {
-    return GestureDetector(
-      onTap: onTap, // Menggunakan parameter onTap yang diberikan
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        decoration: BoxDecoration(
-          color: color,
-          borderRadius: BorderRadius.circular(15),
-          border: Border.all(color: Colors.white, width: 3),
-        ),
-        child: Center(
-          child: Text(
-            text,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
+
 }

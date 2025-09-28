@@ -26,14 +26,22 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
       if (mounted) {
         if (success) {
+          print('✅ Login successful, user logged in');
           ScaffoldMessenger.of(
             context,
-          ).showSnackBar(const SnackBar(content: Text('Login berhasil!')));
+          ).showSnackBar(const SnackBar(
+            content: Text('Login berhasil!'),
+            backgroundColor: Colors.green,
+          ));
           // Navigate to main menu after successful login
           context.go(AppRoutes.mainMenu);
         } else {
+          print('❌ Login failed');
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Email atau password salah.')),
+            const SnackBar(
+              content: Text('Email atau password salah.'),
+              backgroundColor: Colors.red,
+            ),
           );
         }
       }

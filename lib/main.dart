@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'router/app_router.dart';
-import 'screens/shared_preferences.dart';
 import 'database_helper_v3.dart';
 import 'database_migration_helper.dart';
 
@@ -11,9 +10,7 @@ Future<void> main() async {
   // Handle databsase migration and initialization
   await _initializeDatabase();
 
-  final isLoggedIn = await SharedPreferencesHelper.getLoginStatus();
-
-  runApp(ProviderScope(child: MyApp(isLoggedIn: isLoggedIn)));
+  runApp(const ProviderScope(child: MyApp()));
 }
 
 Future<void> _initializeDatabase() async {
@@ -46,16 +43,36 @@ Future<void> _initializeDatabase() async {
 }
 
 class MyApp extends StatelessWidget {
-  final bool isLoggedIn;
-  const MyApp({super.key, required this.isLoggedIn});
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp.router(
       title: 'Amma PLAY App',
       theme: ThemeData(
-        fontFamily: 'YourCustomFont',
-        primarySwatch: Colors.blue,
+        fontFamily: 'Sunday Magic',
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        primaryColor: Colors.deepPurple,
+        scaffoldBackgroundColor: Colors.white,
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          iconTheme: IconThemeData(color: Colors.white),
+          titleTextStyle: TextStyle(color: Colors.white, fontSize: 20),
+        ),
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: ElevatedButton.styleFrom(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          ),
+        ),
+
+        // Sunday-magic hint: use gradients in widgets (ThemeData doesn't hold gradients directly)
+        // Example gradient to use in widgets:
+        // const LinearGradient sundayGradient = LinearGradient(
+        //   colors: [Color(0xFF6A11CB), Color(0xFF2575FC)],
+        //   begin: Alignment.topLeft,
+        //   end: Alignment.bottomRight,
+        // );
       ),
       debugShowCheckedModeBanner: false,
       routerConfig: appRouter, // Use go_router configuration

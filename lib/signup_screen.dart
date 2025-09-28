@@ -36,16 +36,22 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
 
       if (mounted) {
         if (success) {
+          print('✅ Signup successful, user logged in');
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Pendaftaran berhasil! Anda sudah login.'),
+              backgroundColor: Colors.green,
             ),
           );
           // Navigate to main menu after successful signup
           context.go(AppRoutes.mainMenu);
         } else {
+          print('❌ Signup failed');
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Email ini sudah terdaftar atau terjadi kesalahan.')),
+            const SnackBar(
+              content: Text('Email ini sudah terdaftar atau terjadi kesalahan.'),
+              backgroundColor: Colors.red,
+            ),
           );
         }
       }

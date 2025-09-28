@@ -23,14 +23,30 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
     });
   }
 
-  void _checkAuthenticationAndNavigate() {
+  void _checkAuthenticationAndNavigate() async {
+    print('🔍 Checking authentication status...');
+    
+    // Wait for the family user provider to finish loading
     final userState = ref.read(familyUserProvider);
+    print('📱 User state: isLoading=${userState.isLoading}, isLoggedIn=${userState.isLoggedIn}, user=${userState.user?.namaPengguna}');
+    
+    // If still loading, wait a bit more
+    if (userState.isLoading) {
+      print('⏳ Still loading, waiting...');
+      await Future.delayed(const Duration(milliseconds: 500));
+      if (mounted) {
+        _checkAuthenticationAndNavigate();
+        return;
+      }
+    }
     
     if (userState.isLoggedIn && userState.user != null) {
       // User is logged in, go to main menu
+      print('✅ User is authenticated, navigating to main menu');
       context.go(AppRoutes.mainMenu);
     } else {
       // User is not logged in, go to auth screen
+      print('❌ User is not authenticated, navigating to auth screen');
       context.go(AppRoutes.auth);
     }
   }

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
-class AppBackground extends StatelessWidget {
-  const AppBackground({super.key});
+class AppBackgroundNoClouds extends StatelessWidget {
+  const AppBackgroundNoClouds({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -33,19 +33,6 @@ class AppBackground extends StatelessWidget {
             ),
           ),
         ),
-        //Awan di Atas menggunakan cloud.svg
-        Positioned(
-          top: 0,
-          left: 0,
-          right: 0,
-          child: SvgPicture.asset(
-            'assets/cloud.svg',
-            width: MediaQuery.of(context).size.width,
-            height: 150,
-            fit: BoxFit.cover,
-          ),
-        ),
-        // Awan di Bawah menggunakan cloud.svg yang dibalik vertikal
         Positioned(
           bottom: 0,
           left: 0,

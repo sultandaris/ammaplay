@@ -3,9 +3,27 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import '../widgets/app_background.dart';
 import '../router/app_router.dart';
+import 'shared_preferences.dart';
 
-class AuthScreen extends StatelessWidget {
+class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key});
+
+  @override
+  State<AuthScreen> createState() => _AuthScreenState();
+}
+
+class _AuthScreenState extends State<AuthScreen> {
+  @override
+  void initState() {
+    super.initState();
+    _checkSharedPreferencesStatus();
+  }
+
+  Future<void> _checkSharedPreferencesStatus() async {
+    final loginStatus = await SharedPreferencesHelper.getLoginStatus();
+    final userEmail = await SharedPreferencesHelper.getLoggedInUserEmail();
+    print('📱 SharedPreferences status: loginStatus=$loginStatus, userEmail=$userEmail');
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -139,6 +157,24 @@ class AuthScreen extends StatelessWidget {
                     ),
                     textAlign: TextAlign.center,
                   ),
+                  const SizedBox(height: 20),
+                  
+                  // Debug info in development
+                  if (const bool.fromEnvironment('dart.vm.product') == false)
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.3),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        'Development Mode\nSharedPreferences Integration Active',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Colors.white.withOpacity(0.8),
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
                 ],
               ),
             ),
