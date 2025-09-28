@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'providers/family_user_provider.dart';
 import 'aksi_surat.dart';
 import 'models/family_models.dart';
+import '../widgets/app_background_no_clouds.dart';
+
 
 class PilihSuratScreen extends ConsumerStatefulWidget {
   const PilihSuratScreen({super.key});
@@ -19,17 +21,8 @@ class _PilihSuratScreenState extends ConsumerState<PilihSuratScreen> {
       backgroundColor: const Color(0xFF0D4C56), // Warna background utama
       body: Stack(
         children: [
+          const AppBackgroundNoClouds(),
           // Awan di bagian bawah
-          Positioned(
-            bottom: -50,
-            left: 0,
-            right: 0,
-            child: Icon(
-              Icons.cloud,
-              size: 400,
-              color: Colors.white.withOpacity(0.15),
-            ),
-          ),
           SafeArea(
             child: Column(
               children: [
@@ -126,21 +119,11 @@ class _PilihSuratScreenState extends ConsumerState<PilihSuratScreen> {
         children: [
           GestureDetector(
             onTap: () => Navigator.of(context).pop(),
-            child: Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF9D463),
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: Colors.white.withOpacity(0.7),
-                  width: 3,
-                ),
-              ),
-              child: const Icon(
-                Icons.arrow_back_ios_new,
-                color: Colors.white,
-                size: 24,
-              ),
+            child: SvgPicture.asset(
+              'assets/backtomainmenu.svg',
+              width: 50,
+              height: 50,
+              fit: BoxFit.contain,
             ),
           ),
           const Text(
@@ -178,48 +161,12 @@ class _LevelBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: isSpecial
-                ? const Color(0xFF58C2A8)
-                : const Color(0xFF4C98A4),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: const Color(0xFFF9D463), width: 3),
-          ),
-          child: Text(
-            '#$level',
-            style: const TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-              fontSize: 22,
-            ),
-          ),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Container(
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF9D463),
-              borderRadius: BorderRadius.circular(50),
-              border: Border.all(color: const Color(0xFFD4A23F), width: 4),
-            ),
-            child: Center(
-              child: Text(
-                'Level ${level.toString().padLeft(2, '0')}',
-                style: const TextStyle(
-                  color: Color(0xFF6B4F1A),
-                  fontWeight: FontWeight.bold,
-                  fontSize: 22,
-                ),
-              ),
-            ),
-          ),
-        ),
-      ],
+    return Center(
+      child: SvgPicture.asset(
+        'assets/level1.svg',
+        width: MediaQuery.of(context).size.width * 0.9,
+        fit: BoxFit.contain,
+      ),
     );
   }
 }
@@ -336,30 +283,84 @@ class _SurahCard extends StatelessWidget {
           );
         },
         child: Ink(
-          decoration: BoxDecoration(
-            color: const Color(0xFFF9D463), // Warna dasar kartu terbuka
+            decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [
+              Color(0xFFFECC5C),
+              Color(0xFFF6AD38),
+              ],
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+            ),
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: const Color(0xFFD4A23F), width: 4),
-          ),
+            border: Border.all(color: const Color(0xFFD4A23F), width: 8),
+            boxShadow: const [
+              BoxShadow(
+              color: Colors.black26,
+              blurRadius: 6,
+              offset: Offset(0, 3),
+              ),
+            ],
+            ),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text(
-                'Surat',
-                style: TextStyle(
-                  color: const Color(0xFF6B4F1A).withOpacity(0.8),
-                  fontSize: 14,
+                // 'Surat' with white outline
+                Stack(
+                alignment: Alignment.center,
+                children: [
+                  // Outline
+                  Text(
+                  'Surat',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 17,
+                    foreground: Paint()
+                    ..style = PaintingStyle.stroke
+                    ..strokeWidth = 3
+                    ..color = Colors.white,
+                  ),
+                  ),
+                  // Fill
+                  Text(
+                  'Surat',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: const Color(0xFF10566B).withOpacity(0.8),
+                    fontSize: 17,
+                  ),
+                  ),
+                ],
                 ),
-              ),
-              Text(
-                surah.namaLatin,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  color: Color(0xFF6B4F1A),
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
+                // surah.namaLatin with white outline
+                Stack(
+                alignment: Alignment.center,
+                children: [
+                  // Outline
+                  Text(
+                  surah.namaLatin,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    foreground: Paint()
+                    ..style = PaintingStyle.stroke
+                    ..strokeWidth = 4
+                    ..color = Colors.white,
+                  ),
+                  ),
+                  // Fill
+                  Text(
+                  surah.namaLatin,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: Color(0xFF10566B),
+                    fontWeight: FontWeight.bold,
+                    fontSize: 20,
+                  ),
+                  ),
+                ],
                 ),
-              ),
               // Tampilkan bintang sesuai dengan progress yang sudah dicapai
               // Selalu tampilkan bintang untuk menunjukkan progress visual
               Padding(

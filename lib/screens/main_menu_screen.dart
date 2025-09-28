@@ -199,7 +199,7 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
         // Background mainmenustair.svg
         SvgPicture.asset(
           'assets/mainmenustair.svg',
-          width: 255, // Diperbesar untuk mengikuti proporsi gambar
+          width: 250, // Diperbesar untuk mengikuti proporsi gambar
           fit: BoxFit.contain,
         ),
         // Text di atas background
@@ -207,7 +207,7 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
           text,
           style: const TextStyle(
             fontFamily: 'Sunday Magic',
-            fontSize: 38, // Sedikit dikecilkan agar proporsional
+            fontSize: 34, // Sedikit dikecilkan agar proporsional
             fontWeight: FontWeight.bold,
             color: Colors.white,
             letterSpacing: 3,
