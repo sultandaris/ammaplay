@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:video_player/video_player.dart';
 import 'models/family_models.dart';
+import 'widgets/app_background_pattern.dart';
 
 class MemaknaiScreen extends StatefulWidget {
   final EnhancedSurah surah;
@@ -177,38 +179,42 @@ class _MemaknaiScreenState extends State<MemaknaiScreen>
     }
 
     return Scaffold(
-      backgroundColor: const Color(0xFF0D4C56),
-      body: SafeArea(
-        child: FadeTransition(
-          opacity: _fadeAnimation,
-          child: Column(
-            children: [
-              _buildCustomAppBar(),
-              _buildSurahHeader(),
-              Expanded(
-                child: Container(
-                  margin: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.black,
-                    borderRadius: BorderRadius.circular(25),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.3),
-                        blurRadius: 15,
-                        offset: const Offset(0, 8),
+      body: Stack(
+        children: [
+          const AppBackgroundPattern(),
+          SafeArea(
+            child: FadeTransition(
+              opacity: _fadeAnimation,
+              child: Column(
+                children: [
+                  _buildCustomAppBar(),
+                  _buildSurahHeader(),
+                  Expanded(
+                    child: Container(
+                      margin: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.black,
+                        borderRadius: BorderRadius.circular(25),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.3),
+                            blurRadius: 15,
+                            offset: const Offset(0, 8),
+                          ),
+                        ],
                       ),
-                    ],
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(25),
+                        child: _buildVideoPlayer(),
+                      ),
+                    ),
                   ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(25),
-                    child: _buildVideoPlayer(),
-                  ),
-                ),
+                  _buildVideoDescription(),
+                ],
               ),
-              _buildVideoDescription(),
-            ],
+            ),
           ),
-        ),
+        ],
       ),
     );
   }
@@ -230,84 +236,219 @@ class _MemaknaiScreenState extends State<MemaknaiScreen>
 
   Widget _buildCustomAppBar() {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 10.0),
+      padding: const EdgeInsets.symmetric(horizontal: 16.0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           GestureDetector(
             onTap: () => Navigator.of(context).pop(),
-            child: Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF9D463),
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: Colors.white.withOpacity(0.7),
-                  width: 3,
-                ),
-              ),
-              child: const Icon(
-                Icons.arrow_back_ios_new,
-                color: Colors.white,
-                size: 24,
-              ),
+            child: SvgPicture.asset(
+              'assets/exitsegmen.svg',
+              width: 50,
+              height: 50,
+              fit: BoxFit.contain,
             ),
           ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: const Text(
-              'Memaknai',
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-                fontSize: 16,
-              ),
-            ),
-          ),
+          SvgPicture.asset('assets/amma_play_logo.svg', height: 40),
         ],
       ),
     );
   }
 
   Widget _buildSurahHeader() {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF9D463),
-        borderRadius: BorderRadius.circular(25),
-        border: Border.all(color: Colors.white.withOpacity(0.5), width: 2),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(15),
+    return Column(
+      children: [
+        // Nama surat dengan suratbar.svg
+        Stack(
+          alignment: Alignment.center,
+          children: [
+            SvgPicture.asset(
+              'assets/suratbar.svg',
+              width: MediaQuery.of(context).size.width * 0.7,
+              fit: BoxFit.contain,
             ),
-            child: const Icon(
-              Icons.play_circle_filled,
-              color: Colors.white,
-              size: 24,
+            Text(
+              widget.surah.namaLatin,
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 24,
+                shadows: [
+                  Shadow(
+                    offset: Offset(-2.0, -2.0),
+                    color: Colors.orange,
+                    blurRadius: 1.0,
+                  ),
+                  Shadow(
+                    offset: Offset(2.0, -2.0),
+                    color: Colors.orange,
+                    blurRadius: 1.0,
+                  ),
+                  Shadow(
+                    offset: Offset(2.0, 2.0),
+                    color: Colors.orange,
+                    blurRadius: 1.0,
+                  ),
+                  Shadow(
+                    offset: Offset(-2.0, 2.0),
+                    color: Colors.orange,
+                    blurRadius: 1.0,
+                  ),
+                  Shadow(
+                    offset: Offset(0.0, -2.0),
+                    color: Colors.orange,
+                    blurRadius: 1.0,
+                  ),
+                  Shadow(
+                    offset: Offset(2.0, 0.0),
+                    color: Colors.orange,
+                    blurRadius: 1.0,
+                  ),
+                  Shadow(
+                    offset: Offset(0.0, 2.0),
+                    color: Colors.orange,
+                    blurRadius: 1.0,
+                  ),
+                  Shadow(
+                    offset: Offset(-2.0, 0.0),
+                    color: Colors.orange,
+                    blurRadius: 1.0,
+                  ),
+                ],
+              ),
             ),
-          ),
-          const SizedBox(width: 12),
-          Text(
-            'Surat ${widget.surah.namaLatin}',
-            style: const TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
+          ],
+        ),
+        const SizedBox(height: 8),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            // Video info dengan subsuratbar.svg
+            Stack(
+              alignment: Alignment.center,
+              children: [
+                SvgPicture.asset(
+                  'assets/subsuratbar.svg',
+                  width: 120,
+                  fit: BoxFit.contain,
+                ),
+                Text(
+                  widget.surah.artiNama ?? 'Arti',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                    shadows: [
+                      Shadow(
+                        offset: Offset(-1.5, -1.5),
+                        color: Colors.orange,
+                        blurRadius: 0.8,
+                      ),
+                      Shadow(
+                        offset: Offset(1.5, -1.5),
+                        color: Colors.orange,
+                        blurRadius: 0.8,
+                      ),
+                      Shadow(
+                        offset: Offset(1.5, 1.5),
+                        color: Colors.orange,
+                        blurRadius: 0.8,
+                      ),
+                      Shadow(
+                        offset: Offset(-1.5, 1.5),
+                        color: Colors.orange,
+                        blurRadius: 0.8,
+                      ),
+                      Shadow(
+                        offset: Offset(0.0, -1.5),
+                        color: Colors.orange,
+                        blurRadius: 0.8,
+                      ),
+                      Shadow(
+                        offset: Offset(1.5, 0.0),
+                        color: Colors.orange,
+                        blurRadius: 0.8,
+                      ),
+                      Shadow(
+                        offset: Offset(0.0, 1.5),
+                        color: Colors.orange,
+                        blurRadius: 0.8,
+                      ),
+                      Shadow(
+                        offset: Offset(-1.5, 0.0),
+                        color: Colors.orange,
+                        blurRadius: 0.8,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
-          ),
-        ],
-      ),
+            const SizedBox(width: 8),
+            // Mode Memaknai dengan subsuratbar.svg
+            Stack(
+              alignment: Alignment.center,
+              children: [
+                SvgPicture.asset(
+                  'assets/subsuratbar.svg',
+                  width: 120,
+                  fit: BoxFit.contain,
+                ),
+                Text(
+                  'Memaknai',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                    shadows: [
+                      Shadow(
+                        offset: Offset(-1.5, -1.5),
+                        color: Colors.orange,
+                        blurRadius: 0.8,
+                      ),
+                      Shadow(
+                        offset: Offset(1.5, -1.5),
+                        color: Colors.orange,
+                        blurRadius: 0.8,
+                      ),
+                      Shadow(
+                        offset: Offset(1.5, 1.5),
+                        color: Colors.orange,
+                        blurRadius: 0.8,
+                      ),
+                      Shadow(
+                        offset: Offset(-1.5, 1.5),
+                        color: Colors.orange,
+                        blurRadius: 0.8,
+                      ),
+                      Shadow(
+                        offset: Offset(0.0, -1.5),
+                        color: Colors.orange,
+                        blurRadius: 0.8,
+                      ),
+                      Shadow(
+                        offset: Offset(1.5, 0.0),
+                        color: Colors.orange,
+                        blurRadius: 0.8,
+                      ),
+                      Shadow(
+                        offset: Offset(0.0, 1.5),
+                        color: Colors.orange,
+                        blurRadius: 0.8,
+                      ),
+                      Shadow(
+                        offset: Offset(-1.5, 0.0),
+                        color: Colors.orange,
+                        blurRadius: 0.8,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ],
     );
   }
 
@@ -564,14 +705,8 @@ class _MemaknaiScreenState extends State<MemaknaiScreen>
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(25),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(28),
+        border: Border.all(color: const Color.fromARGB(255, 228, 142, 20), width: 10),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -602,9 +737,9 @@ class _MemaknaiScreenState extends State<MemaknaiScreen>
             ],
           ),
           const SizedBox(height: 12),
-          const Text(
-            'Video pembelajaran Surat An-Naas ini akan membantu Anda memahami makna dan hikmah dari setiap ayat. Gunakan kontrol video untuk memutar, menjeda, atau menonton dalam mode layar penuh.',
-            style: TextStyle(
+          Text(
+            'Video pembelajaran Surat ${widget.surah.namaLatin} ini akan membantu Anda memahami makna dan hikmah dari setiap ayat. Gunakan kontrol video untuk memutar, menjeda, atau menonton dalam mode layar penuh.',
+            style: const TextStyle(
               fontSize: 14,
               height: 1.5,
               color: Color(0xFF666666),

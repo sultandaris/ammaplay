@@ -108,7 +108,6 @@ class _BermainScreenState extends State<BermainScreen> {
         _ayatList = ayat;
         _isLoading = false;
       });
-      // --- AUDIO LOGIC ---
       _loadAudioForCurrentAyat(); // Muat audio untuk ayat pertama
     } catch (e) {
       setState(() {
@@ -138,9 +137,24 @@ class _BermainScreenState extends State<BermainScreen> {
   }
 
   Future<void> _goToNextAyat() async {
+    // Cek apakah ayat saat ini sudah didengar
+    if (!_playedAyats.contains(_currentAyatIndex)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Dengarkan ayat ini terlebih dahulu sebelum melanjutkan!'),
+          backgroundColor: Colors.red,
+          duration: Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
+
     if (_currentAyatIndex < _ayatList.length - 1 && !_isChangingAyat) {
       final newIndex = _currentAyatIndex + 1;
       final audioUrl = _ayatList[newIndex]['audio_url'];
+
+      // Stop current audio first
+      await _audioPlayer.stop();
 
       // Update state sekali saja - ayat dan loading bersamaan
       setState(() {
@@ -148,10 +162,11 @@ class _BermainScreenState extends State<BermainScreen> {
         _currentAyatIndex = newIndex;
       });
 
-      // Load audio setelah UI terupdate
+      // Load audio setelah UI terupdate (tapi jangan auto-play)
       if (audioUrl != null) {
         try {
           await _audioPlayer.setUrl(audioUrl);
+          // TIDAK auto-play, biarkan user menekan play manual
         } catch (e) {
           print("Error loading audio: $e");
         }
@@ -171,16 +186,20 @@ class _BermainScreenState extends State<BermainScreen> {
       final newIndex = _currentAyatIndex - 1;
       final audioUrl = _ayatList[newIndex]['audio_url'];
 
+      // Stop current audio first
+      await _audioPlayer.stop();
+
       // Update state sekali saja - ayat dan loading bersamaan
       setState(() {
         _isChangingAyat = true;
         _currentAyatIndex = newIndex;
       });
 
-      // Load audio setelah UI terupdate
+      // Load audio setelah UI terupdate (tapi jangan auto-play)
       if (audioUrl != null) {
         try {
           await _audioPlayer.setUrl(audioUrl);
+          // TIDAK auto-play, biarkan user menekan play manual
         } catch (e) {
           print("Error loading audio: $e");
         }
@@ -272,9 +291,51 @@ class _BermainScreenState extends State<BermainScreen> {
           Text(
             _surahDetail!['nama'] ?? 'Nama Surat',
             style: const TextStyle(
-              color: Color(0xFF6B4F1A),
+              color: Colors.white,
               fontWeight: FontWeight.bold,
               fontSize: 24,
+              shadows: [
+                Shadow(
+                  offset: Offset(-2.0, -2.0),
+                  color: Colors.orange,
+                  blurRadius: 1.0,
+                ),
+                Shadow(
+                  offset: Offset(2.0, -2.0),
+                  color: Colors.orange,
+                  blurRadius: 1.0,
+                ),
+                Shadow(
+                  offset: Offset(2.0, 2.0),
+                  color: Colors.orange,
+                  blurRadius: 1.0,
+                ),
+                Shadow(
+                  offset: Offset(-2.0, 2.0),
+                  color: Colors.orange,
+                  blurRadius: 1.0,
+                ),
+                Shadow(
+                  offset: Offset(0.0, -2.0),
+                  color: Colors.orange,
+                  blurRadius: 1.0,
+                ),
+                Shadow(
+                  offset: Offset(2.0, 0.0),
+                  color: Colors.orange,
+                  blurRadius: 1.0,
+                ),
+                Shadow(
+                  offset: Offset(0.0, 2.0),
+                  color: Colors.orange,
+                  blurRadius: 1.0,
+                ),
+                Shadow(
+                  offset: Offset(-2.0, 0.0),
+                  color: Colors.orange,
+                  blurRadius: 1.0,
+                ),
+              ],
             ),
           ),
         ],
@@ -295,9 +356,51 @@ class _BermainScreenState extends State<BermainScreen> {
               Text(
                 _surahDetail!['arti'] ?? 'Arti',
                 style: const TextStyle(
-                  color: Color(0xFF6B4F1A),
+                  color: Colors.white,
                   fontWeight: FontWeight.bold,
                   fontSize: 16,
+                  shadows: [
+                    Shadow(
+                      offset: Offset(-1.5, -1.5),
+                      color: Colors.orange,
+                      blurRadius: 0.8,
+                    ),
+                    Shadow(
+                      offset: Offset(1.5, -1.5),
+                      color: Colors.orange,
+                      blurRadius: 0.8,
+                    ),
+                    Shadow(
+                      offset: Offset(1.5, 1.5),
+                      color: Colors.orange,
+                      blurRadius: 0.8,
+                    ),
+                    Shadow(
+                      offset: Offset(-1.5, 1.5),
+                      color: Colors.orange,
+                      blurRadius: 0.8,
+                    ),
+                    Shadow(
+                      offset: Offset(0.0, -1.5),
+                      color: Colors.orange,
+                      blurRadius: 0.8,
+                    ),
+                    Shadow(
+                      offset: Offset(1.5, 0.0),
+                      color: Colors.orange,
+                      blurRadius: 0.8,
+                    ),
+                    Shadow(
+                      offset: Offset(0.0, 1.5),
+                      color: Colors.orange,
+                      blurRadius: 0.8,
+                    ),
+                    Shadow(
+                      offset: Offset(-1.5, 0.0),
+                      color: Colors.orange,
+                      blurRadius: 0.8,
+                    ),
+                  ],
                 ),
               ),
             ],
@@ -315,9 +418,51 @@ class _BermainScreenState extends State<BermainScreen> {
               Text(
                 '${_surahDetail!['jumlah_ayat'] ?? 0} Ayat',
                 style: const TextStyle(
-                  color: Color(0xFF6B4F1A),
+                  color: Colors.white,
                   fontWeight: FontWeight.bold,
                   fontSize: 16,
+                  shadows: [
+                    Shadow(
+                      offset: Offset(-1.5, -1.5),
+                      color: Colors.orange,
+                      blurRadius: 0.8,
+                    ),
+                    Shadow(
+                      offset: Offset(1.5, -1.5),
+                      color: Colors.orange,
+                      blurRadius: 0.8,
+                    ),
+                    Shadow(
+                      offset: Offset(1.5, 1.5),
+                      color: Colors.orange,
+                      blurRadius: 0.8,
+                    ),
+                    Shadow(
+                      offset: Offset(-1.5, 1.5),
+                      color: Colors.orange,
+                      blurRadius: 0.8,
+                    ),
+                    Shadow(
+                      offset: Offset(0.0, -1.5),
+                      color: Colors.orange,
+                      blurRadius: 0.8,
+                    ),
+                    Shadow(
+                      offset: Offset(1.5, 0.0),
+                      color: Colors.orange,
+                      blurRadius: 0.8,
+                    ),
+                    Shadow(
+                      offset: Offset(0.0, 1.5),
+                      color: Colors.orange,
+                      blurRadius: 0.8,
+                    ),
+                    Shadow(
+                      offset: Offset(-1.5, 0.0),
+                      color: Colors.orange,
+                      blurRadius: 0.8,
+                    ),
+                  ],
                 ),
               ),
             ],
@@ -333,7 +478,7 @@ class _BermainScreenState extends State<BermainScreen> {
     decoration: BoxDecoration(
       color: Colors.white,
       borderRadius: BorderRadius.circular(28),
-      border: Border.all(color: const Color(0xFF08363D), width: 10),
+      border: Border.all(color: const Color.fromARGB(255, 228, 142, 20), width: 10),
     ),
     child: _isChangingAyat
         ? const Center(
@@ -433,18 +578,11 @@ class _BermainScreenState extends State<BermainScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 _ControlButton(
-                  icon: Icons.refresh_rounded,
-                  onTap: () {
-                    _audioPlayer.seek(Duration.zero);
-                    _audioPlayer.play();
-                  },
-                ),
-                _ControlButton(
-                  icon: isPlaying
+                  icon: (isPlaying && processingState != ProcessingState.completed)
                       ? Icons.pause_rounded
                       : Icons.play_arrow_rounded,
                   onTap: () {
-                    if (isPlaying) {
+                    if (isPlaying && processingState != ProcessingState.completed) {
                       _audioPlayer.pause();
                     } else {
                       // Jika sudah selesai, putar dari awal
@@ -456,14 +594,7 @@ class _BermainScreenState extends State<BermainScreen> {
                   },
                   isLarge: true,
                 ),
-                _ControlButton(
-                  icon: Icons.stop_rounded,
-                  onTap: () {
-                    _audioPlayer.stop();
-                    _loadAudioForCurrentAyat(); // Siapkan lagi untuk play berikutnya
-                  },
-                ),
-                _ControlButton(icon: Icons.volume_up_rounded, onTap: () {}),
+                
                 // DEBUG: Manual completion button for testing
                 _ControlButton(
                   icon: Icons.check_circle,
@@ -492,74 +623,89 @@ class _BermainScreenState extends State<BermainScreen> {
     );
   }
 
-  Widget _buildPagination(Map<String, dynamic> ayat) => Row(
-    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-    crossAxisAlignment: CrossAxisAlignment.center,
-    children: [
-      GestureDetector(
-        onTap: (_isChangingAyat || _currentAyatIndex == 0)
-            ? null
-            : _goToPreviousAyat,
-        child: Container(
-          width: 80,
-          height: 60,
-          decoration: BoxDecoration(
-            border: Border.all(color: Colors.red, width: 2), // Debug border
-          ),
-          child: Opacity(
-            opacity: (_isChangingAyat || _currentAyatIndex == 0) ? 0.5 : 1.0,
-            child: SvgPicture.asset(
-              'assets/prevayat.svg',
-              width: 80,
-              height: 60,
-              fit: BoxFit.contain,
-              placeholderBuilder: (context) => Container(
+  Widget _buildPagination(Map<String, dynamic> ayat) {
+    // Cek apakah ayat saat ini sudah didengar
+    final isCurrentAyatPlayed = _playedAyats.contains(_currentAyatIndex);
+    final canGoNext = isCurrentAyatPlayed && _currentAyatIndex < _ayatList.length - 1 && !_isChangingAyat;
+    final canGoPrev = _currentAyatIndex > 0 && !_isChangingAyat;
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        GestureDetector(
+          onTap: canGoPrev ? _goToPreviousAyat : null,
+          child: Container(
+            child: Opacity(
+              opacity: canGoPrev ? 1.0 : 0.5,
+              child: SvgPicture.asset(
+                'assets/prevayat.svg',
                 width: 80,
                 height: 60,
-                color: Colors.yellow,
-                child: const Center(child: Text('PREV', style: TextStyle(color: Colors.black))),
+                fit: BoxFit.contain,
+                placeholderBuilder: (context) => Container(
+                  width: 80,
+                  height: 60,
+                  color: Colors.yellow,
+                  child: const Center(child: Text('PREV', style: TextStyle(color: Colors.black))),
+                ),
               ),
             ),
           ),
         ),
-      ),
-      Text(
-        'AYAT ${(ayat['nomor'] ?? 0).toString().padLeft(2, '0')}',
-        style: const TextStyle(
-          color: Colors.white,
-          fontSize: 20,
-          fontWeight: FontWeight.bold,
+        Column(
+          children: [
+            Text(
+              'AYAT ${(ayat['nomor'] ?? 0).toString().padLeft(2, '0')}',
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            // Indicator jika ayat belum didengar
+            if (!isCurrentAyatPlayed)
+              Container(
+                margin: const EdgeInsets.only(top: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color: Colors.red.withOpacity(0.8),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Text(
+                  'Dengarkan dulu',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+          ],
         ),
-      ),
-      GestureDetector(
-        onTap: (_isChangingAyat || _currentAyatIndex >= _ayatList.length - 1)
-            ? null
-            : _goToNextAyat,
-        child: Container(
-          width: 80,
-          height: 60,
-          decoration: BoxDecoration(
-            border: Border.all(color: Colors.blue, width: 2), // Debug border
-          ),
-          child: Opacity(
-            opacity: (_isChangingAyat || _currentAyatIndex >= _ayatList.length - 1) ? 0.5 : 1.0,
-            child: SvgPicture.asset(
-              'assets/nexyatat.svg',
-              width: 80,
-              height: 60,
-              fit: BoxFit.contain,
-              placeholderBuilder: (context) => Container(
+        GestureDetector(
+          onTap: canGoNext ? _goToNextAyat : null,
+          child: Container(
+            child: Opacity(
+              opacity: canGoNext ? 1.0 : 0.5,
+              child: SvgPicture.asset(
+                'assets/nexyatat.svg',
                 width: 80,
                 height: 60,
-                color: Colors.green,
-                child: const Center(child: Text('NEXT', style: TextStyle(color: Colors.black))),
+                fit: BoxFit.contain,
+                placeholderBuilder: (context) => Container(
+                  width: 80,
+                  height: 60,
+                  color: Colors.green,
+                  child: const Center(child: Text('NEXT', style: TextStyle(color: Colors.black))),
+                ),
               ),
             ),
           ),
         ),
-      ),
-    ],
-  );
+      ],
+    );
+  }
 }
 
 // --- Widget-widget kecil di bawah ini ---

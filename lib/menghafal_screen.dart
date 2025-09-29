@@ -6,10 +6,11 @@ import 'package:just_audio/just_audio.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:string_similarity/string_similarity.dart';
 import 'dart:async';
-import 'dart:io';
+
 import 'package:path_provider/path_provider.dart';
 import 'database_helper_v3.dart';
 import 'models/family_models.dart';
+import 'widgets/app_background_pattern.dart';
 
 // Data class for text comparison results
 class TextComparison {
@@ -54,14 +55,13 @@ class _MenghafalScreenState extends State<MenghafalScreen>
   // State variables
   bool _isLoading = true;
   bool _isRecording = false;
-  bool _isPlayingRecording = false;
-  bool _isPlayingReference = false;
+
   bool _hasRecording = false;
 
   Map<String, dynamic>? _surahDetail;
   List<Map<String, dynamic>> _ayatList = [];
   int _currentAyatIndex = 0;
-  String? _recordingPath;
+
   Duration _recordingDuration = Duration.zero;
   Timer? _recordingTimer;
 
@@ -222,7 +222,7 @@ class _MenghafalScreenState extends State<MenghafalScreen>
         _isListening = true;
         _recordingDuration = Duration.zero;
         _showResult = false;
-        _recordingPath = filePath;
+
         _recognizedText = '';
       });
 
@@ -264,7 +264,7 @@ class _MenghafalScreenState extends State<MenghafalScreen>
       setState(() {
         _isRecording = false;
         _isListening = false;
-        _recordingPath = path;
+
         _hasRecording = path != null;
       });
 
@@ -387,58 +387,7 @@ class _MenghafalScreenState extends State<MenghafalScreen>
     });
   }
 
-  Future<void> _playRecording() async {
-    if (_recordingPath != null && File(_recordingPath!).existsSync()) {
-      try {
-        setState(() => _isPlayingRecording = true);
 
-        await _audioPlayer.setFilePath(_recordingPath!);
-        await _audioPlayer.play();
-
-        // Listen for playback completion
-        _audioPlayer.playerStateStream.listen((state) {
-          if (state.processingState == ProcessingState.completed) {
-            setState(() => _isPlayingRecording = false);
-          }
-        });
-      } catch (e) {
-        print('Error playing recording: $e');
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Gagal memutar rekaman')));
-        setState(() => _isPlayingRecording = false);
-      }
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('File rekaman tidak ditemukan')),
-      );
-    }
-  }
-
-  Future<void> _playReference() async {
-    if (_ayatList.isNotEmpty) {
-      final audioUrl = _ayatList[_currentAyatIndex]['audio_url'];
-      if (audioUrl != null) {
-        try {
-          setState(() => _isPlayingReference = true);
-          await _audioPlayer.setUrl(audioUrl);
-          await _audioPlayer.play();
-
-          _audioPlayer.playerStateStream.listen((state) {
-            if (state.processingState == ProcessingState.completed) {
-              setState(() => _isPlayingReference = false);
-            }
-          });
-        } catch (e) {
-          print('Error playing reference audio: $e');
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Gagal memutar audio contoh')),
-          );
-          setState(() => _isPlayingReference = false);
-        }
-      }
-    }
-  }
 
   void _nextAyat() {
     if (_currentAyatIndex < _ayatList.length - 1) {
@@ -447,10 +396,7 @@ class _MenghafalScreenState extends State<MenghafalScreen>
         _currentAyatIndex++;
         _hasRecording = false;
         _showResult = false;
-        _recordingPath = null;
         _pronunciationScore = 0;
-        _isPlayingRecording = false;
-        _isPlayingReference = false;
       });
     }
   }
@@ -462,10 +408,7 @@ class _MenghafalScreenState extends State<MenghafalScreen>
         _currentAyatIndex--;
         _hasRecording = false;
         _showResult = false;
-        _recordingPath = null;
         _pronunciationScore = 0;
-        _isPlayingRecording = false;
-        _isPlayingReference = false;
       });
     }
   }
@@ -567,7 +510,6 @@ class _MenghafalScreenState extends State<MenghafalScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0D4C56),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator(color: Colors.white))
           : _buildContent(),
@@ -586,112 +528,190 @@ class _MenghafalScreenState extends State<MenghafalScreen>
 
     final currentAyat = _ayatList[_currentAyatIndex];
 
-    return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            _buildAppBar(),
-            const SizedBox(height: 16),
-            _buildSurahHeader(),
-            const SizedBox(height: 20),
-            Expanded(
-              child: SingleChildScrollView(
-                child: Column(
-                  children: [
-                    _buildAyatCard(currentAyat),
-                    const SizedBox(height: 20),
-                    _buildRecordingSection(),
-                    const SizedBox(height: 20),
-                    if (_showResult) _buildResultSection(),
-                    const SizedBox(height: 20),
-                    _buildControls(),
-                  ],
-                ),
-              ),
+    return Stack(
+      children: [
+        const AppBackgroundPattern(),
+        SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            child: Column(
+              children: [
+                _buildCustomAppBar(),
+                const SizedBox(height: 10),
+                _buildSurahHeader(),
+                const SizedBox(height: 20),
+                _buildAyahCard(currentAyat),
+                const SizedBox(height: 20),
+                _buildRecordingSection(),
+                const SizedBox(height: 20),
+                if (_showResult) _buildResultSection(),
+                const Spacer(),
+                _buildNavigation(currentAyat),
+                const SizedBox(height: 20),
+              ],
             ),
-            _buildNavigation(currentAyat),
-          ],
+          ),
         ),
-      ),
+      ],
     );
   }
 
-  Widget _buildAppBar() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        _RoundButton(
-          icon: Icons.arrow_back,
-          onTap: () => Navigator.of(context).pop(),
-        ),
-        const Text(
-          'Mode Menghafal',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
+  Widget _buildCustomAppBar() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          GestureDetector(
+            onTap: () => Navigator.of(context).pop(),
+            child: SvgPicture.asset(
+              'assets/exitsegmen.svg',
+              height: 35,
+              
+            ),
           ),
-        ),
-        Row(
-          children: [
-            // Developer button to complete memorization instantly
-            GestureDetector(
-              onTap: _completeAllAyatsInstantly,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: Colors.orange.withOpacity(0.8),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.orange, width: 1),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.flash_on,
-                      color: Colors.white,
-                      size: 16,
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      'Selesai Instan',
-                      style: TextStyle(
+         
+          Row(
+            children: [
+              // Developer button to complete memorization instantly
+              GestureDetector(
+                onTap: _completeAllAyatsInstantly,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.orange.withOpacity(0.8),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.orange, width: 1),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.flash_on,
                         color: Colors.white,
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
+                        size: 16,
                       ),
-                    ),
-                  ],
+                      const SizedBox(width: 4),
+                      Text(
+                        'Selesai Instan',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(width: 8),
-            SvgPicture.asset('assets/amma_play_logo.svg', height: 35),
-          ],
-        ),
-      ],
+              const SizedBox(width: 8),
+              SvgPicture.asset('assets/amma_play_logo.svg', height: 35),
+            ],
+          ),
+        ],
+      ),
     );
   }
 
   Widget _buildSurahHeader() {
     return Column(
       children: [
-        _InfoPill(text: _surahDetail!['nama'] ?? 'Nama Surat', isLarge: true),
-        const SizedBox(height: 8),
+        // Main surah name with SVG background
+        Stack(
+          alignment: Alignment.center,
+          children: [
+            SvgPicture.asset(
+              'assets/suratbar.svg',
+              height: 60,
+            ),
+            Text(
+              _surahDetail!['nama'] ?? 'Nama Surat',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                shadows: [
+                  Shadow(offset: Offset(-1.0, -1.0), blurRadius: 0.0, color: Colors.orange),
+                  Shadow(offset: Offset(1.0, -1.0), blurRadius: 0.0, color: Colors.orange),
+                  Shadow(offset: Offset(1.0, 1.0), blurRadius: 0.0, color: Colors.orange),
+                  Shadow(offset: Offset(-1.0, 1.0), blurRadius: 0.0, color: Colors.orange),
+                  Shadow(offset: Offset(-2.0, 0.0), blurRadius: 0.0, color: Colors.orange),
+                  Shadow(offset: Offset(2.0, 0.0), blurRadius: 0.0, color: Colors.orange),
+                  Shadow(offset: Offset(0.0, -2.0), blurRadius: 0.0, color: Colors.orange),
+                  Shadow(offset: Offset(0.0, 2.0), blurRadius: 0.0, color: Colors.orange),
+                ],
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        // Sub info with SVG background
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            _InfoPill(text: _surahDetail!['arti'] ?? 'Arti'),
-            const SizedBox(width: 8),
-            _InfoPill(text: '${_surahDetail!['jumlah_ayat'] ?? 0} Ayat'),
+            Stack(
+              alignment: Alignment.center,
+              children: [
+                SvgPicture.asset(
+                  'assets/subsuratbar.svg',
+                  height: 35,
+                ),
+                Text(
+                  _surahDetail!['arti'] ?? 'Arti',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    shadows: [
+                      Shadow(offset: Offset(-1.0, -1.0), blurRadius: 0.0, color: Colors.orange),
+                      Shadow(offset: Offset(1.0, -1.0), blurRadius: 0.0, color: Colors.orange),
+                      Shadow(offset: Offset(1.0, 1.0), blurRadius: 0.0, color: Colors.orange),
+                      Shadow(offset: Offset(-1.0, 1.0), blurRadius: 0.0, color: Colors.orange),
+                      Shadow(offset: Offset(-2.0, 0.0), blurRadius: 0.0, color: Colors.orange),
+                      Shadow(offset: Offset(2.0, 0.0), blurRadius: 0.0, color: Colors.orange),
+                      Shadow(offset: Offset(0.0, -2.0), blurRadius: 0.0, color: Colors.orange),
+                      Shadow(offset: Offset(0.0, 2.0), blurRadius: 0.0, color: Colors.orange),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(width: 16),
+            Stack(
+              alignment: Alignment.center,
+              children: [
+                SvgPicture.asset(
+                  'assets/subsuratbar.svg',
+                  height: 35,
+                ),
+                Text(
+                  '${_surahDetail!['jumlah_ayat'] ?? 0} Ayat',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    shadows: [
+                      Shadow(offset: Offset(-1.0, -1.0), blurRadius: 0.0, color: Colors.orange),
+                      Shadow(offset: Offset(1.0, -1.0), blurRadius: 0.0, color: Colors.orange),
+                      Shadow(offset: Offset(1.0, 1.0), blurRadius: 0.0, color: Colors.orange),
+                      Shadow(offset: Offset(-1.0, 1.0), blurRadius: 0.0, color: Colors.orange),
+                      Shadow(offset: Offset(-2.0, 0.0), blurRadius: 0.0, color: Colors.orange),
+                      Shadow(offset: Offset(2.0, 0.0), blurRadius: 0.0, color: Colors.orange),
+                      Shadow(offset: Offset(0.0, -2.0), blurRadius: 0.0, color: Colors.orange),
+                      Shadow(offset: Offset(0.0, 2.0), blurRadius: 0.0, color: Colors.orange),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ],
         ),
       ],
     );
   }
 
-  Widget _buildAyatCard(Map<String, dynamic> ayat) {
+
+  Widget _buildAyahCard(Map<String, dynamic> ayat) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -1039,229 +1059,56 @@ class _MenghafalScreenState extends State<MenghafalScreen>
     );
   }
 
-  Widget _buildControls() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      children: [
-        _ControlButton(
-          icon: Icons.volume_up_rounded,
-          label: 'Dengar Contoh',
-          isActive: _isPlayingReference,
-          onTap: () {
-            if (_isPlayingReference) {
-              _audioPlayer.stop();
-              setState(() => _isPlayingReference = false);
-            } else {
-              _playReference();
-            }
-          },
-        ),
-        if (_hasRecording)
-          _ControlButton(
-            icon: Icons.play_arrow_rounded,
-            label: 'Putar Rekaman',
-            isActive: _isPlayingRecording,
-            onTap: () {
-              if (_isPlayingRecording) {
-                _audioPlayer.stop();
-                setState(() => _isPlayingRecording = false);
-              } else {
-                _playRecording();
-              }
-            },
-          ),
-      ],
-    );
-  }
+
 
   Widget _buildNavigation(Map<String, dynamic> ayat) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        _NavigationButton(
-          label: 'Ayat\nSebelumnya',
-          onTap: _currentAyatIndex > 0 ? _previousAyat : () {},
-          isEnabled: _currentAyatIndex > 0,
-          isNext: false,
-        ),
-        Text(
-          'AYAT ${(ayat['nomor'] ?? 0).toString().padLeft(2, '0')}',
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          GestureDetector(
+            onTap: _currentAyatIndex > 0 ? _previousAyat : null,
+            child: Opacity(
+              opacity: _currentAyatIndex > 0 ? 1.0 : 0.5,
+              child: SvgPicture.asset(
+                'assets/prevayat.svg',
+                height: 55,
+              ),
+            ),
           ),
-        ),
-        _NavigationButton(
-          label: 'Ayat\nSelanjutnya',
-          onTap: _currentAyatIndex < _ayatList.length - 1 ? _nextAyat : () {},
-          isEnabled: _currentAyatIndex < _ayatList.length - 1,
-          isNext: true,
-        ),
-      ],
-    );
-  }
-}
-
-// Custom Widgets
-class _RoundButton extends StatelessWidget {
-  final IconData icon;
-  final VoidCallback onTap;
-  const _RoundButton({required this.icon, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: const Color(0xFFF9D463),
-          shape: BoxShape.circle,
-          border: Border.all(color: Colors.white.withOpacity(0.7), width: 2),
-        ),
-        child: Icon(icon, color: Colors.white, size: 20),
-      ),
-    );
-  }
-}
-
-class _InfoPill extends StatelessWidget {
-  final String text;
-  final bool isLarge;
-  const _InfoPill({required this.text, this.isLarge = false});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.symmetric(
-        horizontal: isLarge ? 32 : 16,
-        vertical: isLarge ? 10 : 6,
-      ),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF9D463),
-        borderRadius: BorderRadius.circular(25),
-        border: Border.all(color: const Color(0xFFD4A23F), width: 2),
-      ),
-      child: Text(
-        text,
-        style: TextStyle(
-          color: const Color(0xFF6B4F1A),
-          fontWeight: FontWeight.bold,
-          fontSize: isLarge ? 18 : 14,
-        ),
-      ),
-    );
-  }
-}
-
-class _ControlButton extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final bool isActive;
-  final VoidCallback onTap;
-
-  const _ControlButton({
-    required this.icon,
-    required this.label,
-    required this.isActive,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        decoration: BoxDecoration(
-          color: isActive ? const Color(0xFF2B9DA8) : const Color(0xFFF9D463),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: const Color(0xFFD4A23F), width: 2),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              isActive ? Icons.pause : icon,
-              color: isActive ? Colors.white : const Color(0xFF6B4F1A),
-              size: 24,
+          Text(
+            'AYAT ${(ayat['nomor'] ?? 0).toString().padLeft(2, '0')}',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              shadows: [
+                Shadow(offset: Offset(-1.0, -1.0), blurRadius: 0.0, color: Colors.orange),
+                Shadow(offset: Offset(1.0, -1.0), blurRadius: 0.0, color: Colors.orange),
+                Shadow(offset: Offset(1.0, 1.0), blurRadius: 0.0, color: Colors.orange),
+                Shadow(offset: Offset(-1.0, 1.0), blurRadius: 0.0, color: Colors.orange),
+                Shadow(offset: Offset(-2.0, 0.0), blurRadius: 0.0, color: Colors.orange),
+                Shadow(offset: Offset(2.0, 0.0), blurRadius: 0.0, color: Colors.orange),
+                Shadow(offset: Offset(0.0, -2.0), blurRadius: 0.0, color: Colors.orange),
+                Shadow(offset: Offset(0.0, 2.0), blurRadius: 0.0, color: Colors.orange),
+              ],
             ),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              style: TextStyle(
-                color: isActive ? Colors.white : const Color(0xFF6B4F1A),
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
+          ),
+          GestureDetector(
+            onTap: _currentAyatIndex < _ayatList.length - 1 ? _nextAyat : null,
+            child: Opacity(
+              opacity: _currentAyatIndex < _ayatList.length - 1 ? 1.0 : 0.5,
+              child: SvgPicture.asset(
+                'assets/nexyatat.svg',
+                height: 55,
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 }
 
-class _NavigationButton extends StatelessWidget {
-  final String label;
-  final VoidCallback onTap;
-  final bool isEnabled;
-  final bool isNext;
 
-  const _NavigationButton({
-    required this.label,
-    required this.onTap,
-    required this.isEnabled,
-    required this.isNext,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: isEnabled ? onTap : null,
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: isEnabled
-              ? const Color(0xFFF9D463)
-              : const Color(0xFFF9D463).withOpacity(0.5),
-          borderRadius: BorderRadius.circular(15),
-          border: Border.all(color: const Color(0xFFD4A23F), width: 2),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (!isNext)
-              Icon(
-                Icons.arrow_left_rounded,
-                color: isEnabled
-                    ? const Color(0xFF6B4F1A)
-                    : const Color(0xFF6B4F1A).withOpacity(0.5),
-                size: 24,
-              ),
-            Text(
-              label,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: isEnabled
-                    ? const Color(0xFF6B4F1A)
-                    : const Color(0xFF6B4F1A).withOpacity(0.5),
-                fontWeight: FontWeight.bold,
-                fontSize: 12,
-              ),
-            ),
-            if (isNext)
-              Icon(
-                Icons.arrow_right_rounded,
-                color: isEnabled
-                    ? const Color(0xFF6B4F1A)
-                    : const Color(0xFF6B4F1A).withOpacity(0.5),
-                size: 24,
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-}
