@@ -3,8 +3,10 @@ import 'menghafal_screen.dart';
 import 'memaknai_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'models/family_models.dart';
 import 'providers/family_user_provider.dart';
+import '../widgets/app_background_no_clouds.dart';
 
 class SurahActionScreen extends ConsumerStatefulWidget {
   final SurahWithProgress surahWithProgress;
@@ -61,11 +63,13 @@ class _SurahActionScreenState extends ConsumerState<SurahActionScreen> {
     int currentProgress,
   ) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0D4C56),
-      body: SafeArea(
-        child: Column(
-          children: [
-            _buildCustomAppBar(context),
+      body: Stack(
+        children: [
+          const AppBackgroundNoClouds(),
+          SafeArea(
+            child: Column(
+              children: [
+                _buildCustomAppBar(context),
             const SizedBox(height: 40),
             Text(
               'Surat ${surah.namaLatin}',
@@ -85,10 +89,8 @@ class _SurahActionScreenState extends ConsumerState<SurahActionScreen> {
             const SizedBox(height: 20),
             _buildProgressIndicator(currentProgress),
             const SizedBox(height: 30),
-            _ActionCard(
-              title: 'Membaca',
-              icon: Icons.play_circle_fill_rounded,
-              color: const Color(0xFFF9D463),
+            _SvgActionCard(
+              svgAsset: 'assets/membaca.svg',
               isAvailable: true,
               isCompleted: currentProgress >= 1,
               onTap: () {
@@ -99,10 +101,9 @@ class _SurahActionScreenState extends ConsumerState<SurahActionScreen> {
                 );
               },
             ),
-            _ActionCard(
-              title: 'Menghafal',
-              icon: Icons.psychology_rounded,
-              color: const Color(0xFF58C2A8),
+            const SizedBox(height: 10),
+            _SvgActionCard(
+              svgAsset: 'assets/menghafal.svg',
               isAvailable: currentProgress >= 1,
               isCompleted: currentProgress >= 2,
               onTap: () {
@@ -119,10 +120,9 @@ class _SurahActionScreenState extends ConsumerState<SurahActionScreen> {
                 }
               },
             ),
-            _ActionCard(
-              title: 'Memaknai',
-              icon: Icons.menu_book_rounded,
-              color: const Color(0xFF4C98A4),
+            const SizedBox(height: 10),
+            _SvgActionCard(
+              svgAsset: 'assets/memaknai.svg',
               isAvailable: currentProgress >= 2,
               isCompleted: currentProgress >= 3,
               onTap: () {
@@ -141,6 +141,8 @@ class _SurahActionScreenState extends ConsumerState<SurahActionScreen> {
             ),
           ],
         ),
+      ),
+        ],
       ),
     );
   }
@@ -422,21 +424,11 @@ class _SurahActionScreenState extends ConsumerState<SurahActionScreen> {
         children: [
           GestureDetector(
             onTap: () => Navigator.of(context).pop(),
-            child: Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF9D463),
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: Colors.white.withOpacity(0.7),
-                  width: 3,
-                ),
-              ),
-              child: const Icon(
-                Icons.arrow_back_ios_new,
-                color: Colors.white,
-                size: 24,
-              ),
+            child: SvgPicture.asset(
+              'assets/backtomainmenu.svg',
+              width: 50,
+              height: 50,
+              fit: BoxFit.contain,
             ),
           ),
           // DEBUG BUTTONS - Remove in production
@@ -522,18 +514,14 @@ class _SurahActionScreenState extends ConsumerState<SurahActionScreen> {
   }
 }
 
-class _ActionCard extends StatelessWidget {
-  final String title;
-  final IconData icon;
-  final Color color;
+class _SvgActionCard extends StatelessWidget {
+  final String svgAsset;
   final bool isAvailable;
   final bool isCompleted;
   final VoidCallback onTap;
 
-  const _ActionCard({
-    required this.title,
-    required this.icon,
-    required this.color,
+  const _SvgActionCard({
+    required this.svgAsset,
     required this.isAvailable,
     required this.isCompleted,
     required this.onTap,
@@ -542,60 +530,56 @@ class _ActionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 10.0),
-      child: Card(
-        elevation: 5,
-        color: Colors.transparent,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(25),
-          onTap: onTap,
-          child: Ink(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 25),
-            decoration: BoxDecoration(
-              color: isAvailable ? color : color.withOpacity(0.4),
-              borderRadius: BorderRadius.circular(25),
-              border: Border.all(
-                color: isAvailable
-                    ? Colors.white.withOpacity(0.5)
-                    : Colors.grey.withOpacity(0.3),
-                width: 3,
+      padding: const EdgeInsets.symmetric(horizontal: 24.0),
+      child: GestureDetector(
+        onTap: onTap,
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            // SVG Asset dengan opacity jika tidak tersedia
+            Opacity(
+              opacity: isAvailable ? 1.0 : 0.5,
+              child: SvgPicture.asset(
+                svgAsset,
+                width: MediaQuery.of(context).size.width * 0.8,
+                fit: BoxFit.contain,
               ),
             ),
-            child: Row(
-              children: [
-                Icon(
-                  isAvailable ? icon : Icons.lock_rounded,
-                  color: isAvailable ? Colors.white : Colors.grey.shade300,
-                  size: 40,
+            // Icon gembok jika tidak tersedia
+            if (!isAvailable)
+              Container(
+                width: 60,
+                height: 60,
+                decoration: BoxDecoration(
+                  color: Colors.black.withOpacity(0.6),
+                  shape: BoxShape.circle,
                 ),
-                const SizedBox(width: 20),
-                Expanded(
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        title,
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: isAvailable
-                              ? Colors.white
-                              : Colors.grey.shade300,
-                        ),
-                      ),
-                      if (isCompleted)
-                        const Icon(
-                          Icons.check_circle_rounded,
-                          color: Colors.white,
-                          size: 30,
-                        ),
-                    ],
+                child: const Icon(
+                  Icons.lock_rounded,
+                  color: Colors.white,
+                  size: 30,
+                ),
+              ),
+            // Icon centang jika sudah selesai
+            if (isCompleted && isAvailable)
+              Positioned(
+                top: 10,
+                right: 20,
+                child: Container(
+                  width: 40,
+                  height: 40,
+                  decoration: const BoxDecoration(
+                    color: Color(0xFF58C2A8),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.check_rounded,
+                    color: Colors.white,
+                    size: 24,
                   ),
                 ),
-              ],
-            ),
-          ),
+              ),
+          ],
         ),
       ),
     );
