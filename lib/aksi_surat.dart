@@ -6,7 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'models/family_models.dart';
 import 'providers/family_user_provider.dart';
-import '../widgets/app_background_no_clouds.dart';
+import 'widgets/app_background_no_clouds.dart';
 
 class SurahActionScreen extends ConsumerStatefulWidget {
   final SurahWithProgress surahWithProgress;
@@ -70,124 +70,113 @@ class _SurahActionScreenState extends ConsumerState<SurahActionScreen> {
             child: Column(
               children: [
                 _buildCustomAppBar(context),
-            const SizedBox(height: 40),
-            Text(
-              'Surat ${surah.namaLatin}',
-              style: const TextStyle(
-                fontSize: 32,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-                shadows: [
-                  Shadow(
-                    blurRadius: 2.0,
-                    color: Colors.black26,
-                    offset: Offset(2.0, 2.0),
+                const SizedBox(height: 40),
+                Text(
+                  'Surat ${surah.namaLatin}',
+                  style: const TextStyle(
+                    fontSize: 32,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                    shadows: [
+                      Shadow(
+                        blurRadius: 2.0,
+                        color: Colors.black26,
+                        offset: Offset(2.0, 2.0),
+                      ),
+                    ],
                   ),
-                ],
-              ),
+                ),
+                const SizedBox(height: 30),
+                _SvgActionCard(
+                  svgAsset: 'assets/membaca.svg',
+                  isAvailable: true,
+                  isCompleted: currentProgress >= 1,
+                  onTap: () {
+                    _navigateToScreen(
+                      context,
+                      BermainScreen(surah: surah),
+                      'membaca',
+                    );
+                  },
+                ),
+                const SizedBox(height: 20),
+                _SvgActionCard(
+                  svgAsset: 'assets/menghafal.svg',
+                  isAvailable: currentProgress >= 1,
+                  isCompleted: currentProgress >= 2,
+                  onTap: () {
+                    if (currentProgress >= 1) {
+                      _navigateToScreen(
+                        context,
+                        MenghafalScreen(surah: surah),
+                        'menghafal',
+                      );
+                    } else {
+                      _showLockedMessage(
+                        'Selesaikan tahap Membaca terlebih dahulu',
+                      );
+                    }
+                  },
+                ),
+                const SizedBox(height: 20),
+                _SvgActionCard(
+                  svgAsset: 'assets/memaknai.svg',
+                  isAvailable: currentProgress >= 2,
+                  isCompleted: currentProgress >= 3,
+                  onTap: () {
+                    if (currentProgress >= 2) {
+                      _navigateToScreen(
+                        context,
+                        MemaknaiScreen(surah: surah),
+                        'memaknai',
+                      );
+                    } else {
+                      _showLockedMessage(
+                        'Selesaikan tahap Menghafal terlebih dahulu',
+                      );
+                    }
+                  },
+                ),
+                const Spacer(), // Ini akan mendorong starbar ke bawah
+                _buildStarBar(currentProgress),
+                const SizedBox(height: 30), // Margin dari bawah
+              ],
             ),
-            const SizedBox(height: 20),
-            _buildProgressIndicator(currentProgress),
-            const SizedBox(height: 30),
-            _SvgActionCard(
-              svgAsset: 'assets/membaca.svg',
-              isAvailable: true,
-              isCompleted: currentProgress >= 1,
-              onTap: () {
-                _navigateToScreen(
-                  context,
-                  BermainScreen(surah: surah),
-                  'membaca',
-                );
-              },
-            ),
-            const SizedBox(height: 10),
-            _SvgActionCard(
-              svgAsset: 'assets/menghafal.svg',
-              isAvailable: currentProgress >= 1,
-              isCompleted: currentProgress >= 2,
-              onTap: () {
-                if (currentProgress >= 1) {
-                  _navigateToScreen(
-                    context,
-                    MenghafalScreen(surah: surah),
-                    'menghafal',
-                  );
-                } else {
-                  _showLockedMessage(
-                    'Selesaikan tahap Membaca terlebih dahulu',
-                  );
-                }
-              },
-            ),
-            const SizedBox(height: 10),
-            _SvgActionCard(
-              svgAsset: 'assets/memaknai.svg',
-              isAvailable: currentProgress >= 2,
-              isCompleted: currentProgress >= 3,
-              onTap: () {
-                if (currentProgress >= 2) {
-                  _navigateToScreen(
-                    context,
-                    MemaknaiScreen(surah: surah),
-                    'memaknai',
-                  );
-                } else {
-                  _showLockedMessage(
-                    'Selesaikan tahap Menghafal terlebih dahulu',
-                  );
-                }
-              },
-            ),
-          ],
-        ),
-      ),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildProgressIndicator(int currentProgress) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.2),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFF9D463), width: 2),
-      ),
-      child: Column(
+  Widget _buildStarBar(int currentProgress) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 100.0),
+      child: Stack(
+        alignment: Alignment.center,
         children: [
-          const Text(
-            'Progress Pembelajaran',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-            ),
+          // Background starbar.svg
+          SvgPicture.asset(
+            'assets/starbar.svg',
+            width: MediaQuery.of(context).size.width * 0.6,
+            fit: BoxFit.contain,
           ),
-          const SizedBox(height: 10),
+          // Bintang di atas starbar
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: List.generate(3, (index) {
               return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 2),
                 child: Icon(
-                  Icons.star_rounded,
-                  size: 30,
+                  index < currentProgress 
+                      ? Icons.star_rounded 
+                      : Icons.star_rounded,
+                  size: 44,
                   color: index < currentProgress
                       ? const Color(0xFFF9D463)
-                      : Colors.white.withOpacity(0.3),
+                      : const Color.fromARGB(255, 100, 95, 95).withOpacity(0.6),
                 ),
               );
             }),
-          ),
-          const SizedBox(height: 5),
-          Text(
-            '$currentProgress / 3 Tahapan Selesai',
-            style: TextStyle(
-              color: Colors.white.withOpacity(0.8),
-              fontSize: 14,
-            ),
           ),
         ],
       ),
@@ -560,25 +549,7 @@ class _SvgActionCard extends StatelessWidget {
                   size: 30,
                 ),
               ),
-            // Icon centang jika sudah selesai
-            if (isCompleted && isAvailable)
-              Positioned(
-                top: 10,
-                right: 20,
-                child: Container(
-                  width: 40,
-                  height: 40,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFF58C2A8),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.check_rounded,
-                    color: Colors.white,
-                    size: 24,
-                  ),
-                ),
-              ),
+
           ],
         ),
       ),

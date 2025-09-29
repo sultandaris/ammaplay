@@ -3,6 +3,8 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'database_helper_v3.dart';
 import 'models/family_models.dart';
 import 'package:just_audio/just_audio.dart'; // Untuk audio playback
+import 'widgets/app_background_pattern.dart';
+
 
 class BermainScreen extends StatefulWidget {
   final EnhancedSurah surah;
@@ -196,7 +198,6 @@ class _BermainScreenState extends State<BermainScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0D4C56),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator(color: Colors.white))
           : _buildContent(),
@@ -217,16 +218,7 @@ class _BermainScreenState extends State<BermainScreen> {
 
     return Stack(
       children: [
-        Positioned(
-          bottom: -50,
-          left: 0,
-          right: 0,
-          child: Icon(
-            Icons.cloud,
-            size: 400,
-            color: Colors.white.withOpacity(0.15),
-          ),
-        ),
+        const AppBackgroundPattern(),
         SafeArea(
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -253,21 +245,83 @@ class _BermainScreenState extends State<BermainScreen> {
   Widget _buildCustomAppBar() => Row(
     mainAxisAlignment: MainAxisAlignment.spaceBetween,
     children: [
-      _RoundButton(icon: Icons.close, onTap: () => Navigator.of(context).pop()),
+      GestureDetector(
+        onTap: () => Navigator.of(context).pop(),
+        child: SvgPicture.asset(
+          'assets/exitsegmen.svg',
+          width: 50,
+          height: 50,
+          fit: BoxFit.contain,
+        ),
+      ),
       SvgPicture.asset('assets/amma_play_logo.svg', height: 40),
     ],
   );
 
   Widget _buildSurahHeader() => Column(
     children: [
-      _InfoPill(text: _surahDetail!['nama'] ?? 'Nama Surat', isLarge: true),
+      // Nama surat dengan suratbar.svg
+      Stack(
+        alignment: Alignment.center,
+        children: [
+          SvgPicture.asset(
+            'assets/suratbar.svg',
+            width: MediaQuery.of(context).size.width * 0.7,
+            fit: BoxFit.contain,
+          ),
+          Text(
+            _surahDetail!['nama'] ?? 'Nama Surat',
+            style: const TextStyle(
+              color: Color(0xFF6B4F1A),
+              fontWeight: FontWeight.bold,
+              fontSize: 24,
+            ),
+          ),
+        ],
+      ),
       const SizedBox(height: 8),
       Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          _InfoPill(text: _surahDetail!['arti'] ?? 'Arti'),
+          // Arti dengan subsuratbar.svg
+          Stack(
+            alignment: Alignment.center,
+            children: [
+              SvgPicture.asset(
+                'assets/subsuratbar.svg',
+                width: 120,
+                fit: BoxFit.contain,
+              ),
+              Text(
+                _surahDetail!['arti'] ?? 'Arti',
+                style: const TextStyle(
+                  color: Color(0xFF6B4F1A),
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
+              ),
+            ],
+          ),
           const SizedBox(width: 8),
-          _InfoPill(text: '${_surahDetail!['jumlah_ayat'] ?? 0} Ayat'),
+          // Jumlah ayat dengan subsuratbar.svg
+          Stack(
+            alignment: Alignment.center,
+            children: [
+              SvgPicture.asset(
+                'assets/subsuratbar.svg',
+                width: 120,
+                fit: BoxFit.contain,
+              ),
+              Text(
+                '${_surahDetail!['jumlah_ayat'] ?? 0} Ayat',
+                style: const TextStyle(
+                  color: Color(0xFF6B4F1A),
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
+              ),
+            ],
+          ),
         ],
       ),
     ],
@@ -442,13 +496,32 @@ class _BermainScreenState extends State<BermainScreen> {
     mainAxisAlignment: MainAxisAlignment.spaceBetween,
     crossAxisAlignment: CrossAxisAlignment.center,
     children: [
-      _PaginationButton(
-        label: 'Ayat\nSebelumnya',
+      GestureDetector(
         onTap: (_isChangingAyat || _currentAyatIndex == 0)
-            ? () {}
+            ? null
             : _goToPreviousAyat,
-        isNext: false,
-        isDisabled: _isChangingAyat || _currentAyatIndex == 0,
+        child: Container(
+          width: 80,
+          height: 60,
+          decoration: BoxDecoration(
+            border: Border.all(color: Colors.red, width: 2), // Debug border
+          ),
+          child: Opacity(
+            opacity: (_isChangingAyat || _currentAyatIndex == 0) ? 0.5 : 1.0,
+            child: SvgPicture.asset(
+              'assets/prevayat.svg',
+              width: 80,
+              height: 60,
+              fit: BoxFit.contain,
+              placeholderBuilder: (context) => Container(
+                width: 80,
+                height: 60,
+                color: Colors.yellow,
+                child: const Center(child: Text('PREV', style: TextStyle(color: Colors.black))),
+              ),
+            ),
+          ),
+        ),
       ),
       Text(
         'AYAT ${(ayat['nomor'] ?? 0).toString().padLeft(2, '0')}',
@@ -458,71 +531,38 @@ class _BermainScreenState extends State<BermainScreen> {
           fontWeight: FontWeight.bold,
         ),
       ),
-      _PaginationButton(
-        label: 'Ayat\nSelanjutnya',
+      GestureDetector(
         onTap: (_isChangingAyat || _currentAyatIndex >= _ayatList.length - 1)
-            ? () {}
+            ? null
             : _goToNextAyat,
-        isNext: true,
-        isDisabled:
-            _isChangingAyat || _currentAyatIndex >= _ayatList.length - 1,
+        child: Container(
+          width: 80,
+          height: 60,
+          decoration: BoxDecoration(
+            border: Border.all(color: Colors.blue, width: 2), // Debug border
+          ),
+          child: Opacity(
+            opacity: (_isChangingAyat || _currentAyatIndex >= _ayatList.length - 1) ? 0.5 : 1.0,
+            child: SvgPicture.asset(
+              'assets/nexyatat.svg',
+              width: 80,
+              height: 60,
+              fit: BoxFit.contain,
+              placeholderBuilder: (context) => Container(
+                width: 80,
+                height: 60,
+                color: Colors.green,
+                child: const Center(child: Text('NEXT', style: TextStyle(color: Colors.black))),
+              ),
+            ),
+          ),
+        ),
       ),
     ],
   );
 }
 
 // --- Widget-widget kecil di bawah ini ---
-
-class _RoundButton extends StatelessWidget {
-  final IconData icon;
-  final VoidCallback onTap;
-  const _RoundButton({required this.icon, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: const Color(0xFFF9D463),
-          shape: BoxShape.circle,
-          border: Border.all(color: Colors.white.withOpacity(0.7), width: 3),
-        ),
-        child: Icon(icon, color: Colors.white, size: 24),
-      ),
-    );
-  }
-}
-
-class _InfoPill extends StatelessWidget {
-  final String text;
-  final bool isLarge;
-  const _InfoPill({required this.text, this.isLarge = false});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.symmetric(
-        horizontal: isLarge ? 40 : 20,
-        vertical: isLarge ? 12 : 8,
-      ),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF9D463),
-        borderRadius: BorderRadius.circular(50),
-        border: Border.all(color: const Color(0xFFD4A23F), width: 4),
-      ),
-      child: Text(
-        text,
-        style: TextStyle(
-          color: const Color(0xFF6B4F1A),
-          fontWeight: FontWeight.bold,
-          fontSize: isLarge ? 24 : 16,
-        ),
-      ),
-    );
-  }
-}
 
 class _ControlButton extends StatelessWidget {
   final IconData icon;
@@ -555,64 +595,4 @@ class _ControlButton extends StatelessWidget {
   }
 }
 
-class _PaginationButton extends StatelessWidget {
-  final String label;
-  final VoidCallback onTap;
-  final bool isNext;
-  final bool isDisabled;
 
-  const _PaginationButton({
-    required this.label,
-    required this.onTap,
-    required this.isNext,
-    this.isDisabled = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: isDisabled ? null : onTap,
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: isDisabled
-              ? const Color(0xFFF9D463).withOpacity(0.5)
-              : const Color(0xFFF9D463),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: const Color(0xFFD4A23F), width: 4),
-        ),
-        child: Row(
-          children: [
-            if (!isNext)
-              Icon(
-                Icons.arrow_left_rounded,
-                color: isDisabled
-                    ? const Color(0xFF6B4F1A).withOpacity(0.5)
-                    : const Color(0xFF6B4F1A),
-                size: 30,
-              ),
-            Text(
-              label,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: isDisabled
-                    ? const Color(0xFF6B4F1A).withOpacity(0.5)
-                    : const Color(0xFF6B4F1A),
-                fontWeight: FontWeight.bold,
-                fontSize: 14,
-              ),
-            ),
-            if (isNext)
-              Icon(
-                Icons.arrow_right_rounded,
-                color: isDisabled
-                    ? const Color(0xFF6B4F1A).withOpacity(0.5)
-                    : const Color(0xFF6B4F1A),
-                size: 30,
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-}
