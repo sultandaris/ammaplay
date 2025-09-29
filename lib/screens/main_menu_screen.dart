@@ -121,7 +121,7 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
             children: [
               // Tulisan MENU
               Text(
-                "MENU",
+                "",
                 style: const TextStyle(
                   fontFamily: 'Swiss721',
                   fontSize: 45,
@@ -287,7 +287,7 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
           const Text("Hafalan", style: TextStyle(fontWeight: FontWeight.bold)),
           const SizedBox(height: 5),
           SvgPicture.asset(
-            'assets/badge.svg',
+            'assets/badge1.svg',
             width: 50,
           ), // Ganti dengan gambar badge
           const SizedBox(height: 5),

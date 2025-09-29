@@ -80,15 +80,20 @@ class _MenghafalScreenState extends State<MenghafalScreen>
   void initState() {
     super.initState();
     _initializeAnimations();
-    _initializeRecorder();
     _initializeSpeech();
     _loadSurahData();
     _requestPermissions();
   }
 
   Future<void> _initializeRecorder() async {
-    _audioRecorder = FlutterSoundRecorder();
-    await _audioRecorder!.openRecorder();
+    try {
+      _audioRecorder = FlutterSoundRecorder();
+      await _audioRecorder!.openRecorder();
+      print('Audio recorder initialized successfully');
+    } catch (e) {
+      print('Error initializing recorder: $e');
+      _audioRecorder = null;
+    }
   }
 
   Future<void> _initializeSpeech() async {
@@ -139,18 +144,11 @@ class _MenghafalScreenState extends State<MenghafalScreen>
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Izin mikrofon diperlukan untuk merekam')),
       );
+      return;
     }
 
     // Initialize recorder after permissions are granted
-    if (_audioRecorder != null &&
-        permissionStatus == PermissionStatus.granted) {
-      try {
-        await _audioRecorder!.openRecorder();
-        print('Audio recorder initialized successfully');
-      } catch (e) {
-        print('Error initializing recorder: $e');
-      }
-    }
+    await _initializeRecorder();
   }
 
   Future<void> _loadSurahData() async {
@@ -176,6 +174,9 @@ class _MenghafalScreenState extends State<MenghafalScreen>
   Future<void> _startRecording() async {
     if (_audioRecorder == null) {
       print('Recorder not initialized');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Perekam audio belum siap. Coba lagi dalam beberapa detik.')),
+      );
       return;
     }
 
@@ -189,13 +190,13 @@ class _MenghafalScreenState extends State<MenghafalScreen>
     try {
       // Get app documents directory for saving recording
       final directory = await getApplicationDocumentsDirectory();
-      final fileName = 'recording_${DateTime.now().millisecondsSinceEpoch}.m4a';
+      final fileName = 'recording.aac';
       final filePath = '${directory.path}/$fileName';
 
-      // Start audio recording
+      // Start audio recording with system default settings (most compatible)
       await _audioRecorder!.startRecorder(
         toFile: filePath,
-        codec: Codec.aacADTS,
+        // Let flutter_sound choose the best codec for this platform
       );
 
       // Start speech recognition simultaneously
@@ -240,18 +241,31 @@ class _MenghafalScreenState extends State<MenghafalScreen>
       });
     } catch (e) {
       print('Error starting recording: $e');
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Gagal memulai perekaman')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Gagal memulai perekaman: ${e.toString()}')),
+      );
+      
+      // Reset states in case of error
+      setState(() {
+        _isRecording = false;
+        _isListening = false;
+      });
+      _waveAnimationController.stop();
     }
   }
 
   Future<void> _stopRecording() async {
-    if (_audioRecorder == null) return;
+    if (_audioRecorder == null) {
+      print('Recorder is null, cannot stop recording');
+      return;
+    }
 
     try {
       // Stop audio recording
-      final path = await _audioRecorder!.stopRecorder();
+      String? path;
+      if (_audioRecorder!.isRecording) {
+        path = await _audioRecorder!.stopRecorder();
+      }
 
       // Stop speech recognition
       if (_speechToText.isListening) {
@@ -264,8 +278,7 @@ class _MenghafalScreenState extends State<MenghafalScreen>
       setState(() {
         _isRecording = false;
         _isListening = false;
-
-        _hasRecording = path != null;
+        _hasRecording = path != null && path.isNotEmpty;
       });
 
       if (path != null) {
@@ -281,10 +294,15 @@ class _MenghafalScreenState extends State<MenghafalScreen>
       }
     } catch (e) {
       print('Error stopping recording: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Gagal menghentikan perekaman: ${e.toString()}')),
+      );
       setState(() {
         _isRecording = false;
         _isListening = false;
       });
+      _recordingTimer?.cancel();
+      _waveAnimationController.stop();
     }
   }
 
