@@ -4,6 +4,7 @@ import 'database_helper_v3.dart';
 import 'models/family_models.dart';
 import 'package:just_audio/just_audio.dart'; // Untuk audio playback
 import 'widgets/app_background_pattern.dart';
+import 'widgets/reward_screen.dart';
 
 
 class BermainScreen extends StatefulWidget {
@@ -28,6 +29,9 @@ class _BermainScreenState extends State<BermainScreen> {
   // Tracking completion
   Set<int> _playedAyats = {}; // Track which ayats have been played
   bool _hasCompletedReading = false;
+  
+  // Reward screen
+  bool _showReward = false;
 
   @override
   void dispose() {
@@ -60,27 +64,13 @@ class _BermainScreenState extends State<BermainScreen> {
   void _completeReadingTask() {
     setState(() {
       _hasCompletedReading = true;
+      _showReward = true; // Show reward screen
     });
 
     print('DEBUG: Reading task completed! All ayats played.');
 
-    // Show completion message
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text(
-          '🎉 Selamat! Anda telah mendengarkan semua ayat. Tugas membaca selesai!',
-        ),
-        backgroundColor: Colors.green,
-        duration: Duration(seconds: 3),
-      ),
-    );
-
-    // Return to previous screen with success result after delay
-    Future.delayed(const Duration(seconds: 2), () {
-      if (mounted) {
-        Navigator.of(context).pop(true); // Return true to indicate completion
-      }
-    });
+    // Return to previous screen with success result when reward screen is dismissed
+    // The return will be handled by the RewardScreen onComplete callback
   }
 
   void _setupAudioListener() {
@@ -257,6 +247,24 @@ class _BermainScreenState extends State<BermainScreen> {
             ),
           ),
         ),
+        // Reward screen overlay
+        if (_showReward)
+          RewardScreen(
+            title: '🎉 Selamat!',
+            subtitle: 'Anda telah mendengarkan semua ayat.\nTugas membaca selesai!',
+            onComplete: () {
+              setState(() {
+                _showReward = false;
+              });
+              
+              // Return to previous screen with success result
+              Future.delayed(const Duration(milliseconds: 300), () {
+                if (mounted) {
+                  Navigator.of(context).pop(true); // Return true to indicate completion
+                }
+              });
+            },
+          ),
       ],
     );
   }

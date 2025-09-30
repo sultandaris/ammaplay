@@ -4,6 +4,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:video_player/video_player.dart';
 import 'models/family_models.dart';
 import 'widgets/app_background_pattern.dart';
+import 'widgets/reward_screen.dart';
 
 class MemaknaiScreen extends StatefulWidget {
   final EnhancedSurah surah;
@@ -23,10 +24,19 @@ class _MemaknaiScreenState extends State<MemaknaiScreen>
   bool _showControls = true;
   late AnimationController _fadeController;
   late Animation<double> _fadeAnimation;
+  
+  // Star animation controller
+  late AnimationController _starAnimationController;
+  late Animation<double> _starScaleAnimation;
+  late Animation<double> _starOpacityAnimation;
 
   // Completion tracking
   bool _hasWatchedToEnd = false;
   bool _hasCompletedMeaning = false;
+  
+  // Reward screen
+  bool _showReward = false;
+  bool _showStarAnimation = false;
 
   @override
   void initState() {
@@ -44,6 +54,21 @@ class _MemaknaiScreenState extends State<MemaknaiScreen>
       CurvedAnimation(parent: _fadeController, curve: Curves.easeInOut),
     );
     _fadeController.forward();
+    
+    // Initialize star animation
+    _starAnimationController = AnimationController(
+      duration: const Duration(milliseconds: 1500),
+      vsync: this,
+    );
+    _starScaleAnimation = Tween<double>(begin: 0.0, end: 1.2).animate(
+      CurvedAnimation(parent: _starAnimationController, curve: Curves.elasticOut),
+    );
+    _starOpacityAnimation = Tween<double>(begin: 1.0, end: 0.0).animate(
+      CurvedAnimation(
+        parent: _starAnimationController, 
+        curve: const Interval(0.7, 1.0, curve: Curves.easeOut),
+      ),
+    );
   }
 
   Future<void> _initializeVideo() async {
@@ -69,13 +94,13 @@ class _MemaknaiScreenState extends State<MemaknaiScreen>
         _isPlaying = _videoController!.value.isPlaying;
       });
 
-      // Check if video has reached the end
+      // Check if video has reached the end (100% completion)
       final position = _videoController!.value.position;
       final duration = _videoController!.value.duration;
 
       if (duration.inMilliseconds > 0 &&
-          position.inMilliseconds >= (duration.inMilliseconds * 0.95)) {
-        // 95% watched counts as complete
+          position.inMilliseconds >= duration.inMilliseconds) {
+        // Video completed 100%
         _markVideoAsWatched();
       }
     }
@@ -86,10 +111,18 @@ class _MemaknaiScreenState extends State<MemaknaiScreen>
     if (!_hasWatchedToEnd) {
       setState(() {
         _hasWatchedToEnd = true;
+        _showStarAnimation = true; // Show star animation immediately
       });
 
-      print('DEBUG: Video watched to end. Completing meaning task.');
-      _completeMeaningTask();
+      // Start star animation
+      _starAnimationController.forward();
+
+      print('DEBUG: Video watched to end. Starting star animation, then completing meaning task.');
+      
+      // Complete meaning task after star animation
+      Future.delayed(const Duration(seconds: 2), () {
+        _completeMeaningTask();
+      });
     }
   }
 
@@ -98,25 +131,17 @@ class _MemaknaiScreenState extends State<MemaknaiScreen>
     if (!_hasCompletedMeaning) {
       setState(() {
         _hasCompletedMeaning = true;
+        _showStarAnimation = false; // Hide star animation
       });
 
       print('DEBUG: Meaning task completed! Video watched to end.');
 
-      // Show completion message
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            '🎉 Selamat! Anda telah menonton video sampai selesai. Tugas memaknai selesai!',
-          ),
-          backgroundColor: Colors.green,
-          duration: Duration(seconds: 3),
-        ),
-      );
-
-      // Return to previous screen with success result after delay
-      Future.delayed(const Duration(seconds: 2), () {
+      // Give a short delay before showing reward screen for better UX
+      Future.delayed(const Duration(seconds: 1), () {
         if (mounted) {
-          Navigator.of(context).pop(true); // Return true to indicate completion
+          setState(() {
+            _showReward = true; // Show reward screen after delay
+          });
         }
       });
     }
@@ -167,6 +192,7 @@ class _MemaknaiScreenState extends State<MemaknaiScreen>
     _videoController?.removeListener(_videoListener);
     _videoController?.dispose();
     _fadeController.dispose();
+    _starAnimationController.dispose();
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
     SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
     super.dispose();
@@ -214,6 +240,27 @@ class _MemaknaiScreenState extends State<MemaknaiScreen>
               ),
             ),
           ),
+          // Star animation overlay
+          if (_showStarAnimation)
+            _buildStarAnimation(),
+          // Reward screen overlay
+          if (_showReward)
+            RewardScreen(
+              title: '🎉 Selamat!',
+              subtitle: 'Anda telah menonton video sampai selesai.\nTugas memaknai selesai!',
+              onComplete: () {
+                setState(() {
+                  _showReward = false;
+                });
+                
+                // Return to previous screen with success result
+                Future.delayed(const Duration(milliseconds: 300), () {
+                  if (mounted) {
+                    Navigator.of(context).pop(true); // Return true to indicate completion
+                  }
+                });
+              },
+            ),
         ],
       ),
     );
@@ -249,7 +296,46 @@ class _MemaknaiScreenState extends State<MemaknaiScreen>
               fit: BoxFit.contain,
             ),
           ),
-          SvgPicture.asset('assets/amma_play_logo.svg', height: 40),
+          Row(
+            children: [
+              // Debug button to complete video instantly
+              GestureDetector(
+                onTap: () {
+                  print('DEBUG: Force complete video');
+                  _markVideoAsWatched();
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.orange.withOpacity(0.8),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.orange, width: 1),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.flash_on,
+                        color: Colors.white,
+                        size: 16,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        'Selesai',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              SvgPicture.asset('assets/amma_play_logo.svg', height: 40),
+            ],
+          ),
         ],
       ),
     );
@@ -812,6 +898,47 @@ class _MemaknaiScreenState extends State<MemaknaiScreen>
           ),
         ],
       ),
+    );
+  }
+  
+  Widget _buildStarAnimation() {
+    return AnimatedBuilder(
+      animation: _starAnimationController,
+      builder: (context, child) {
+        return Container(
+          width: double.infinity,
+          height: double.infinity,
+          color: Colors.black.withOpacity(0.3),
+          child: Center(
+            child: Opacity(
+              opacity: _starOpacityAnimation.value,
+              child: Transform.scale(
+                scale: _starScaleAnimation.value,
+                child: Container(
+                  width: 150,
+                  height: 150,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF9D463),
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFFF9D463).withOpacity(0.6),
+                        blurRadius: 30,
+                        spreadRadius: 15,
+                      ),
+                    ],
+                  ),
+                  child: const Icon(
+                    Icons.star_rounded,
+                    size: 80,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }
