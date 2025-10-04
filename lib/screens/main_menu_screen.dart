@@ -171,6 +171,14 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
                 },
                 child: _buildMenuItemText("Kelas"),
               ),
+              const SizedBox(height: 18),
+              // Menu item 5 - Speech Test
+              GestureDetector(
+                onTap: () {
+                  context.push(AppRoutes.speechTest);
+                },
+                child: _buildMenuItemText("Speech Test"),
+              ),
               const SizedBox(height: 50),
             ],
           ),

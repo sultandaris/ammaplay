@@ -16,7 +16,6 @@ class MenghafalScreen extends StatefulWidget {
 
 class _MenghafalScreenState extends State<MenghafalScreen> {
   final dbHelper = DatabaseHelperV3.instance;
-
   // Speech to Text instance
   late stt.SpeechToText _speech;
 
@@ -26,7 +25,6 @@ class _MenghafalScreenState extends State<MenghafalScreen> {
   String _recognizedText = '';
   String _statusMessage = 'Tekan mikrofon untuk mulai';
   double _confidence = 0.0;
-  double _soundLevel = 0.0; // Added sound level indicator
   List<String> _speechHistory = [];
 
   // Loading state
@@ -51,15 +49,6 @@ class _MenghafalScreenState extends State<MenghafalScreen> {
     _loadSurahData();
   }
 
-  @override
-  void dispose() {
-    // Stop speech recognition and clean up
-    if (_speech.isListening) {
-      _speech.stop();
-    }
-    super.dispose();
-  }
-
   Future<void> _initializeSpeech() async {
     try {
       // Request microphone permission
@@ -76,72 +65,49 @@ class _MenghafalScreenState extends State<MenghafalScreen> {
       _speechEnabled = await _speech.initialize(
         onStatus: (status) {
           print('Speech Status: $status');
-          if (mounted) {  // Check if widget is still mounted
-            setState(() {
-              if (status == 'listening') {
-                _statusMessage = 'Sedang mendengarkan...';
-              } else if (status == 'notListening') {
-                _statusMessage = 'Berhenti mendengarkan';
-                _isListening = false;
-              } else if (status == 'done') {
-                _statusMessage = 'Speech recognition selesai';
-                _isListening = false;
-              }
-            });
-          }
+          setState(() {
+            if (status == 'listening') {
+              _statusMessage = 'Sedang mendengarkan...';
+            } else if (status == 'notListening') {
+              _statusMessage = 'Berhenti mendengarkan';
+              _isListening = false;
+            } else if (status == 'done') {
+              _statusMessage = 'Speech recognition selesai';
+              _isListening = false;
+            }
+          });
         },
         onError: (error) {
           print('Speech Error: $error');
-          if (mounted) {  // Check if widget is still mounted
-            setState(() {
-              _statusMessage = 'Error: ${error.errorMsg}';
-              _isListening = false;
-              
-              // Handle specific errors
-              if (error.errorMsg == 'error_no_match') {
-                _statusMessage = 'Tidak ada kecocokan suara terdeteksi. Coba bicara lebih jelas.';
-              } else if (error.errorMsg == 'error_speech_timeout') {
-                _statusMessage = 'Waktu habis. Coba lagi.';
-              } else if (error.errorMsg == 'error_network') {
-                _statusMessage = 'Masalah jaringan. Periksa koneksi internet.';
-              }
-            });
-          }
+          setState(() {
+            _statusMessage = 'Error: ${error.errorMsg}';
+            _isListening = false;
+          });
         },
       );
 
       if (_speechEnabled) {
-        if (mounted) {  // Check if widget is still mounted
-          setState(() {
-            _statusMessage = 'Speech recognition siap!';
-          });
-        }
+        setState(() {
+          _statusMessage = 'Speech recognition siap!';
+        });
         
         // Check available locales
         var locales = await _speech.locales();
-        print('Available Locales:');
-        for (var locale in locales) {
-          print('${locale.localeId}: ${locale.name}');
-        }
         var indonesianLocale = locales.firstWhere(
           (locale) => locale.localeId.startsWith('in'),
           orElse: () => locales.first,
         );
         print('Using locale: ${indonesianLocale.localeId}');
       } else {
-        if (mounted) {  // Check if widget is still mounted
-          setState(() {
-            _statusMessage = 'Speech recognition tidak tersedia';
-          });
-        }
+        setState(() {
+          _statusMessage = 'Speech recognition tidak tersedia';
+        });
       }
     } catch (e) {
       print('Error initializing speech: $e');
-      if (mounted) {  // Check if widget is still mounted
-        setState(() {
-          _statusMessage = 'Error menginisialisasi: $e';
-        });
-      }
+      setState(() {
+        _statusMessage = 'Error menginisialisasi: $e';
+      });
     }
   }
 
@@ -149,16 +115,6 @@ class _MenghafalScreenState extends State<MenghafalScreen> {
     try {
       // Load ayat list
       final ayatData = await dbHelper.queryAyatBySurah(widget.surah.idSurat);
-      
-      // Debug: Print ayat data to see what we're getting
-      print('=== DEBUG: Loaded Ayat Data ===');
-      for (int i = 0; i < ayatData.length && i < 3; i++) {
-        final ayat = ayatData[i];
-        print('Ayat ${ayat['nomor']}: teks_latin = "${ayat['teks_latin']}"');
-        print('Ayat ${ayat['nomor']}: teks_arab = "${ayat['teks_arab']}"');
-        print('Ayat ${ayat['nomor']}: teks_indonesia = "${ayat['teks_indonesia']}"');
-        print('---');
-      }
       
       setState(() {
         _surahDetail = {
@@ -185,12 +141,6 @@ class _MenghafalScreenState extends State<MenghafalScreen> {
     if (_ayatList.isNotEmpty && _currentAyatIndex < _ayatList.length) {
       final currentAyat = _ayatList[_currentAyatIndex];
       _expectedLatin = currentAyat['teks_latin'] ?? '';
-      
-      // Debug: Print expected text
-      print('=== DEBUG: Expected Text Update ===');
-      print('Current ayat index: $_currentAyatIndex');
-      print('Expected Latin: "$_expectedLatin"');
-      print('Current ayat data: $currentAyat');
     }
   }
 
@@ -202,75 +152,62 @@ class _MenghafalScreenState extends State<MenghafalScreen> {
         _isListening = true;
         _recognizedText = '';
         _confidence = 0.0;
-        _soundLevel = 0.0; // Reset sound level
         _showResult = false;
         _statusMessage = 'Mulai mendengarkan...';
       });
 
       await _speech.listen(
         onResult: (result) {
-          if (mounted) {  // Check if widget is still mounted
-            setState(() {
-              _recognizedText = result.recognizedWords;
-              _confidence = result.confidence;
+          setState(() {
+            _recognizedText = result.recognizedWords;
+            _confidence = result.confidence;
+            
+            if (result.hasConfidenceRating && result.confidence > 0) {
+              _statusMessage = 'Mendengarkan... (${(_confidence * 100).toInt()}%)';
               
-              if (result.hasConfidenceRating && result.confidence > 0) {
-                _statusMessage = 'Mendengarkan... (${(_confidence * 100).toInt()}%)';
-                
-                // Add to history
-                if (_recognizedText.isNotEmpty && !_speechHistory.contains(_recognizedText)) {
-                  _speechHistory.insert(0, _recognizedText);
-                  if (_speechHistory.length > 10) {
-                    _speechHistory.removeLast();
-                  }
+              // Add to history
+              if (_recognizedText.isNotEmpty && !_speechHistory.contains(_recognizedText)) {
+                _speechHistory.insert(0, _recognizedText);
+                if (_speechHistory.length > 10) {
+                  _speechHistory.removeLast();
                 }
-
-                // Auto-compare when we have confidence > 50% (adjusted for Indonesian)
-                if (_confidence > 0.5 && _recognizedText.isNotEmpty) {
-                  _compareText(_recognizedText, _expectedLatin);
-                }
-              } else {
-                _statusMessage = 'Mendengarkan... (${(_confidence * 100).toInt()}%)';
               }
-            });
-          }
+
+              // Auto-compare when we have confidence > 80%
+              if (_confidence > 0.8 && _recognizedText.isNotEmpty) {
+                _compareText(_recognizedText, _expectedLatin);
+              }
+            } else {
+              _statusMessage = 'Mendengarkan... (${(_confidence * 100).toInt()}%)';
+            }
+          });
         },
-        listenFor: const Duration(seconds: 20), // Reduced to 20 seconds for better stability
-        pauseFor: const Duration(seconds: 2), // Increased pause for stability
+        listenFor: const Duration(seconds: 10),
+        pauseFor: const Duration(seconds: 2),
         partialResults: true,
         localeId: 'in_ID', // Indonesian locale
-        cancelOnError: true, // Cancel on error to prevent hanging
-        listenMode: stt.ListenMode.dictation, // Changed to dictation mode for better accuracy
+        cancelOnError: false,
         onSoundLevelChange: (level) {
-          // Update sound level for visual indicator
-          if (mounted) {  // Check if widget is still mounted
-            setState(() {
-              _soundLevel = level;
-            });
-          }
+          // Optional: You can use this to show sound level indicator
+          // print('Sound level: $level');
         },
       );
     } catch (e) {
       print('Error starting listening: $e');
-      if (mounted) {  // Check if widget is still mounted
-        setState(() {
-          _statusMessage = 'Error: $e';
-          _isListening = false;
-        });
-      }
+      setState(() {
+        _statusMessage = 'Error: $e';
+        _isListening = false;
+      });
     }
   }
 
   Future<void> _stopListening() async {
     try {
       await _speech.stop();
-      if (mounted) {  // Check if widget is still mounted
-        setState(() {
-          _isListening = false;
-          _soundLevel = 0.0; // Reset sound level
-          _statusMessage = 'Berhenti mendengarkan';
-        });
-      }
+      setState(() {
+        _isListening = false;
+        _statusMessage = 'Berhenti mendengarkan';
+      });
     } catch (e) {
       print('Error stopping listening: $e');
     }
@@ -280,8 +217,8 @@ class _MenghafalScreenState extends State<MenghafalScreen> {
     print('DEBUG: Comparing recognized: "$recognized" with expected: "$expected"');
     
     // Clean and normalize both texts for comparison
-    String cleanRecognized = recognized.toLowerCase().trim().replaceAll(RegExp(r'[^\w\s]'), '');
-    String cleanExpected = expected.toLowerCase().trim().replaceAll(RegExp(r'[^\w\s]'), '');
+    String cleanRecognized = recognized.toLowerCase().trim();
+    String cleanExpected = expected.toLowerCase().trim();
     
     // Calculate similarity
     double similarity = 0.0;
@@ -290,30 +227,26 @@ class _MenghafalScreenState extends State<MenghafalScreen> {
     if (cleanRecognized.isNotEmpty && cleanExpected.isNotEmpty) {
       similarity = StringSimilarity.compareTwoStrings(cleanRecognized, cleanExpected);
       
-      // More lenient matching for Indonesian speech recognition
-      isCorrect = similarity >= 0.4; // Reduced from 0.6 to 0.4 for easier matching
+      // Consider it correct if similarity is above 60% (more lenient)
+      isCorrect = similarity >= 0.6;
       
-      print('DEBUG: Clean recognized: "$cleanRecognized"');
-      print('DEBUG: Clean expected: "$cleanExpected"');
       print('DEBUG: Similarity score: ${(similarity * 100).toStringAsFixed(1)}%');
       print('DEBUG: Result: ${isCorrect ? "CORRECT" : "INCORRECT"}');
     } else {
       print('DEBUG: One of the texts is empty, marking as incorrect');
     }
     
-    if (mounted) {  // Check if widget is still mounted
-      setState(() {
-        _pronunciationScore = isCorrect ? 85 : 45;
-        _showResult = true;
-        
-        if (isCorrect) {
-          _markAyatAsCorrect(_currentAyatIndex);
-          print('DEBUG: Ayat marked as correct due to good similarity');
-        } else {
-          print('DEBUG: Ayat not marked as correct due to low similarity');
-        }
-      });
-    }
+    setState(() {
+      _pronunciationScore = isCorrect ? 85 : 45;
+      _showResult = true;
+      
+      if (isCorrect) {
+        _markAyatAsCorrect(_currentAyatIndex);
+        print('DEBUG: Ayat marked as correct due to good similarity');
+      } else {
+        print('DEBUG: Ayat not marked as correct due to low similarity');
+      }
+    });
   }
 
   void _markAyatAsCorrect(int index) {
@@ -333,7 +266,6 @@ class _MenghafalScreenState extends State<MenghafalScreen> {
       _speechHistory.clear();
       _recognizedText = '';
       _confidence = 0.0;
-      _soundLevel = 0.0; // Reset sound level
       _showResult = false;
     });
   }
@@ -346,7 +278,6 @@ class _MenghafalScreenState extends State<MenghafalScreen> {
         _recognizedText = '';
         _showResult = false;
         _confidence = 0.0;
-        _soundLevel = 0.0; // Reset sound level
       });
     }
   }
@@ -359,7 +290,6 @@ class _MenghafalScreenState extends State<MenghafalScreen> {
         _recognizedText = '';
         _showResult = false;
         _confidence = 0.0;
-        _soundLevel = 0.0; // Reset sound level
       });
     }
   }
@@ -382,62 +312,18 @@ class _MenghafalScreenState extends State<MenghafalScreen> {
         backgroundColor: Colors.blue.shade700,
         foregroundColor: Colors.white,
         actions: [
-          // Reset Database Button
-          IconButton(
-            onPressed: () async {
-              try {
-                _showSnackBar('Mereset database...');
-                await dbHelper.resetDatabaseWithUpdatedAyat();
-                _showSnackBar('Database berhasil direset! Silakan restart app.');
-              } catch (e) {
-                _showSnackBar('Error reset database: $e');
-              }
-            },
-            icon: const Icon(Icons.refresh),
-            tooltip: 'Reset Database',
-          ),
-          // Reveal Current Ayat Button
-          IconButton(
-            onPressed: () {
-              setState(() {
-                _revealedAyats.add(_currentAyatIndex);
-              });
-              _showSnackBar('Ayat berhasil diungkapkan!');
-            },
-            icon: const Icon(Icons.visibility),
-            tooltip: 'Tampilkan Ayat',
-          ),
           // Test Perfect Match Button
           IconButton(
             onPressed: () {
-              if (mounted) {
-                setState(() {
-                  _recognizedText = _expectedLatin;
-                });
-                if (_expectedLatin.isNotEmpty) {
-                  _compareText(_recognizedText, _expectedLatin);
-                }
+              setState(() {
+                _recognizedText = _expectedLatin;
+              });
+              if (_expectedLatin.isNotEmpty) {
+                _compareText(_recognizedText, _expectedLatin);
               }
             },
             icon: const Icon(Icons.check_circle),
             tooltip: 'Test Perfect Match',
-          ),
-          // Test Similar Match Button
-          IconButton(
-            onPressed: () {
-              if (mounted) {
-                // Test with slightly different pronunciation
-                String testText = _expectedLatin.replaceAll('auzu', 'audu').replaceAll('nas', 'naas');
-                setState(() {
-                  _recognizedText = testText;
-                });
-                if (_expectedLatin.isNotEmpty) {
-                  _compareText(_recognizedText, _expectedLatin);
-                }
-              }
-            },
-            icon: const Icon(Icons.science),
-            tooltip: 'Test Similar Match',
           ),
           // Complete All Button
           IconButton(
@@ -617,32 +503,6 @@ class _MenghafalScreenState extends State<MenghafalScreen> {
                 ),
               ),
             ],
-            if (_isListening) ...[
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  const Icon(Icons.volume_up, size: 16, color: Colors.blue),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: LinearProgressIndicator(
-                      value: _soundLevel.clamp(0.0, 1.0),
-                      backgroundColor: Colors.grey.shade300,
-                      valueColor: AlwaysStoppedAnimation<Color>(
-                        _soundLevel > 0.5 ? Colors.green : Colors.orange,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    '${(_soundLevel * 100).toInt()}%',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey.shade600,
-                    ),
-                  ),
-                ],
-              ),
-            ],
             if (_showResult) ...[
               const SizedBox(height: 8),
               Container(
@@ -783,24 +643,6 @@ class _MenghafalScreenState extends State<MenghafalScreen> {
                         color: Colors.grey[600],
                       ),
                     ),
-                    // Debug info for development
-                    if (currentAyat['teks_latin'] == null || currentAyat['teks_latin'] == '') ...[
-                      const SizedBox(height: 4),
-                      Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: BoxDecoration(
-                          color: Colors.red.shade100,
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: Text(
-                          'DEBUG: Teks Latin kosong atau null',
-                          style: TextStyle(
-                            fontSize: 10,
-                            color: Colors.red.shade700,
-                          ),
-                        ),
-                      ),
-                    ],
                     const SizedBox(height: 4),
                     Text(
                       '${currentAyat['nomor'] ?? '0'}. ${currentAyat['teks_indonesia'] ?? 'Terjemahan tidak tersedia'}',

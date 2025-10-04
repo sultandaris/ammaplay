@@ -6,6 +6,7 @@ import '../screens/main_menu_screen.dart';
 import '../screens/pengaturan.dart';
 import '../login_screen.dart' as login;
 import '../signup_screen.dart' as signup;
+import '../speech_test_screen.dart';
 
 // Route paths
 class AppRoutes {
@@ -15,14 +16,7 @@ class AppRoutes {
   static const settings = '/settings';
   static const login = '/login';
   static const signup = '/signup';
-}
-
-// Authentication guard function
-bool _isUserLoggedIn() {
-  // This will be called to check authentication status
-  // In a real app, you might need to access the provider here
-  // For now, we'll rely on the splash screen navigation
-  return true; // Will be overridden by splash screen logic
+  static const speechTest = '/speech-test';
 }
 
 // Router configuration
@@ -71,6 +65,13 @@ final GoRouter appRouter = GoRouter(
       name: 'signup',
       builder: (context, state) =>
           const signup.SignUpScreen(), // Your signup screen
+    ),
+
+    // Speech Test Screen
+    GoRoute(
+      path: AppRoutes.speechTest,
+      name: 'speech-test',
+      builder: (context, state) => const SpeechTestScreen(),
     ),
   ],
 

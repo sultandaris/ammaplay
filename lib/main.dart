@@ -19,7 +19,12 @@ Future<void> _initializeDatabase() async {
 
     // Initialize the V3 database (this will create it if it doesn't exist) 
     final dbV3 = DatabaseHelperV3.instance;
-    await dbV3.database;
+    
+    // FORCE RESET DATABASE TO GET SIMPLIFIED LATIN TEXT
+    // This will delete the old database and recreate with new simplified ayat
+    print("Resetting database to update ayat with simplified Latin text...");
+    await dbV3.resetDatabaseWithUpdatedAyat();
+    print("Database reset completed - now using simplified Latin text!");
 
     // Create a test family account for development
     // This is safe to call multiple times - it won't create duplicates

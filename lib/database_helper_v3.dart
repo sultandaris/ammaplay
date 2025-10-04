@@ -213,7 +213,7 @@ class DatabaseHelperV3 {
         suratId: 114,
         nomor: 1,
         teksArab: "قُلْ اَعُوْذُ بِرَبِّ النَّاسِۙ",
-        teksLatin: "Qul a'ụżu birabbin-nās",
+        teksLatin: "qul auzu birobbinnas",
         teksIndonesia: "Katakanlah: \"Aku berlindung kepada Tuhannya manusia,",
         audioUrl:
             "https://everyayah.com/data/Abdurrahmaan_As-Sudais_192kbps/114001.mp3",
@@ -222,7 +222,7 @@ class DatabaseHelperV3 {
         suratId: 114,
         nomor: 2,
         teksArab: "مَلِكِ النَّاسِۙ",
-        teksLatin: "Malikin-nās",
+        teksLatin: "malikinnas",
         teksIndonesia: "Raja manusia,",
         audioUrl:
             "https://everyayah.com/data/Abdurrahmaan_As-Sudais_192kbps/114002.mp3",
@@ -231,7 +231,7 @@ class DatabaseHelperV3 {
         suratId: 114,
         nomor: 3,
         teksArab: "اِلٰهِ النَّاسِۙ",
-        teksLatin: "Ilāhin-nās",
+        teksLatin: "ilahinnas",
         teksIndonesia: "sembahan manusia,",
         audioUrl:
             "https://everyayah.com/data/Abdurrahmaan_As-Sudais_192kbps/114003.mp3",
@@ -240,7 +240,7 @@ class DatabaseHelperV3 {
         suratId: 114,
         nomor: 4,
         teksArab: "مِنْ شَرِّ الْوَسْوَاسِ ەۙ الْخَنَّاسِۖ",
-        teksLatin: "Min syarril-waswāsil-khannās",
+        teksLatin: "min syarril waswasil khannas",
         teksIndonesia: "dari kejahatan (bisikan) setan yang bersembunyi,",
         audioUrl:
             "https://everyayah.com/data/Abdurrahmaan_As-Sudais_192kbps/114004.mp3",
@@ -249,7 +249,7 @@ class DatabaseHelperV3 {
         suratId: 114,
         nomor: 5,
         teksArab: "الَّذِيْ يُوَسْوِسُ فِيْ صُدُوْرِ النَّاسِۙ",
-        teksLatin: "Allażī yuwaswisu fī ṣudụrin-nās",
+        teksLatin: "allazi yuwaswisu fi sudurinnas",
         teksIndonesia: "yang membisikkan (kejahatan) ke dalam dada manusia,",
         audioUrl:
             "https://everyayah.com/data/Abdurrahmaan_As-Sudais_192kbps/114005.mp3",
@@ -258,7 +258,7 @@ class DatabaseHelperV3 {
         suratId: 114,
         nomor: 6,
         teksArab: "مِنَ الْجِنَّةِ وَالنَّاسِ ࣖ",
-        teksLatin: "Minal-jinnati wan-nās",
+        teksLatin: "minal jinnati wannas",
         teksIndonesia: "dari (golongan) jin dan manusia.\"",
         audioUrl:
             "https://everyayah.com/data/Abdurrahmaan_As-Sudais_192kbps/114006.mp3",
@@ -276,7 +276,7 @@ class DatabaseHelperV3 {
         suratId: 113,
         nomor: 1,
         teksArab: "قُلْ اَعُوْذُ بِرَبِّ الْفَلَقِۙ",
-        teksLatin: "Qul a'ụżu birabbil-falaq",
+        teksLatin: "qul auzu birabbil falaq",
         teksIndonesia:
             "Katakanlah: \"Aku berlindung kepada Tuhan yang menguasai fajar,",
         audioUrl:
@@ -286,7 +286,7 @@ class DatabaseHelperV3 {
         suratId: 113,
         nomor: 2,
         teksArab: "مِنْ شَرِّ مَا خَلَقَۙ",
-        teksLatin: "Min syarri mā khalaq",
+        teksLatin: "min syarri ma khalaq",
         teksIndonesia: "dari kejahatan apa yang Dia ciptakan,",
         audioUrl:
             "https://everyayah.com/data/Abdurrahmaan_As-Sudais_192kbps/113002.mp3",
@@ -295,7 +295,7 @@ class DatabaseHelperV3 {
         suratId: 113,
         nomor: 3,
         teksArab: "وَمِنْ شَرِّ غَاسِقٍ اِذَا وَقَبَۙ",
-        teksLatin: "Wa min syarri ghāsiqin iżā waqab",
+        teksLatin: "wa min syarri ghasiqin iza waqab",
         teksIndonesia:
             "dan dari kejahatan malam yang gelap gulita apabila telah tiba,",
         audioUrl:
@@ -305,7 +305,7 @@ class DatabaseHelperV3 {
         suratId: 113,
         nomor: 4,
         teksArab: "وَمِنْ شَرِّ النَّفّٰثٰتِ فِى الْعُقَدِۙ",
-        teksLatin: "Wa min syarrin-naffāṡāti fil-'uqad",
+        teksLatin: "wa min syarrin naffasati fil uqad",
         teksIndonesia:
             "dan dari kejahatan para tukang sihir wanita yang meniup pada buhul-buhul,",
         audioUrl:
@@ -315,7 +315,7 @@ class DatabaseHelperV3 {
         suratId: 113,
         nomor: 5,
         teksArab: "وَمِنْ شَرِّ حَاسِدٍ اِذَا حَسَدَ ࣖ",
-        teksLatin: "Wa min syarri ḥāsidin iżā ḥasad",
+        teksLatin: "wa min syarri hasidin iza hasad",
         teksIndonesia:
             "dan dari kejahatan orang yang dengki apabila dia dengki.\"",
         audioUrl:
@@ -334,7 +334,7 @@ class DatabaseHelperV3 {
         suratId: 108,
         nomor: 1,
         teksArab: "اِنَّآ اَعْطَيْنٰكَ الْكَوْثَرَۗ",
-        teksLatin: "Innā a'ṭainākal-kauṡar",
+        teksLatin: "inna aatainakal kautsar",
         teksIndonesia:
             "Sesungguhnya Kami telah memberikan kepadamu nikmat yang banyak.",
         audioUrl:
@@ -344,7 +344,7 @@ class DatabaseHelperV3 {
         suratId: 108,
         nomor: 2,
         teksArab: "فَصَلِّ لِرَبِّكَ وَانْحَرْۗ",
-        teksLatin: "Fa ṣalli lirabbika wanḥar",
+        teksLatin: "fa shalli lirabbika wanhar",
         teksIndonesia:
             "Maka laksanakanlah shalat karena Tuhanmu, dan berkorbanlah!",
         audioUrl:
@@ -354,7 +354,7 @@ class DatabaseHelperV3 {
         suratId: 108,
         nomor: 3,
         teksArab: "اِنَّ شَانِئَكَ هُوَ الْاَبْتَرُ ࣖ",
-        teksLatin: "Inna syāni'aka huwal-abtar",
+        teksLatin: "inna syaniaka huwal abtar",
         teksIndonesia:
             "Sesungguhnya orang-orang yang membenci kamu dialah yang terputus.",
         audioUrl:
@@ -760,6 +760,19 @@ class DatabaseHelperV3 {
       await file.delete();
       developer.log("Database V3 deleted: $path");
     }
+  }
+
+  // Method to reset database with updated ayat text
+  Future<void> resetDatabaseWithUpdatedAyat() async {
+    developer.log("Starting database reset with updated ayat...");
+    
+    // Close and delete existing database
+    await deleteDatabaseFile();
+    
+    // Re-initialize database (will trigger onCreate with new ayat)
+    _database = await _initDatabase();
+    
+    developer.log("Database reset completed with simplified Latin text");
   }
 
   Future<void> closeDatabase() async {
