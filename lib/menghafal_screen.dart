@@ -73,10 +73,10 @@ class _MenghafalScreenState extends State<MenghafalScreen>
   // Completion tracking
   Set<int> _correctAyats = {}; // Track which ayats have been correctly recited
   bool _hasCompletedMemorization = false;
-  
+
   // Track which ayats have been revealed (after correct recording)
   Set<int> _revealedAyats = {};
-  
+
   // Reward screen
   bool _showReward = false;
 
@@ -179,7 +179,11 @@ class _MenghafalScreenState extends State<MenghafalScreen>
     if (_audioRecorder == null) {
       print('Recorder not initialized');
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Perekam audio belum siap. Coba lagi dalam beberapa detik.')),
+        SnackBar(
+          content: Text(
+            'Perekam audio belum siap. Coba lagi dalam beberapa detik.',
+          ),
+        ),
       );
       return;
     }
@@ -248,7 +252,7 @@ class _MenghafalScreenState extends State<MenghafalScreen>
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Gagal memulai perekaman: ${e.toString()}')),
       );
-      
+
       // Reset states in case of error
       setState(() {
         _isRecording = false;
@@ -299,7 +303,9 @@ class _MenghafalScreenState extends State<MenghafalScreen>
     } catch (e) {
       print('Error stopping recording: $e');
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Gagal menghentikan perekaman: ${e.toString()}')),
+        SnackBar(
+          content: Text('Gagal menghentikan perekaman: ${e.toString()}'),
+        ),
       );
       setState(() {
         _isRecording = false;
@@ -313,7 +319,8 @@ class _MenghafalScreenState extends State<MenghafalScreen>
   void _analyzePronunciation() {
     // For testing purposes, always return a high score (90-95%)
     Future.delayed(const Duration(seconds: 1), () {
-      final testScore = 90 + (DateTime.now().millisecond % 6); // Random between 90-95%
+      final testScore =
+          90 + (DateTime.now().millisecond % 6); // Random between 90-95%
 
       setState(() {
         _pronunciationScore = testScore;
@@ -330,8 +337,9 @@ class _MenghafalScreenState extends State<MenghafalScreen>
 
   void _compareText(String recognized, String expected) {
     // For testing purposes, always return a high score (90-95%)
-    final testScore = 90 + (DateTime.now().millisecond % 6); // Random between 90-95%
-    
+    final testScore =
+        90 + (DateTime.now().millisecond % 6); // Random between 90-95%
+
     setState(() {
       _pronunciationScore = testScore;
       _showResult = true;
@@ -344,14 +352,14 @@ class _MenghafalScreenState extends State<MenghafalScreen>
     });
   }
 
-
-
   void _nextAyat() {
     // Check if current ayat has been correctly recited
     if (!_correctAyats.contains(_currentAyatIndex)) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Hafalan ayat ini harus benar terlebih dahulu sebelum melanjutkan!'),
+          content: Text(
+            'Hafalan ayat ini harus benar terlebih dahulu sebelum melanjutkan!',
+          ),
           backgroundColor: Colors.red,
           duration: Duration(seconds: 2),
         ),
@@ -387,7 +395,9 @@ class _MenghafalScreenState extends State<MenghafalScreen>
     if (!_correctAyats.contains(ayatIndex)) {
       setState(() {
         _correctAyats.add(ayatIndex);
-        _revealedAyats.add(ayatIndex); // Reveal the ayat text after correct recording
+        _revealedAyats.add(
+          ayatIndex,
+        ); // Reveal the ayat text after correct recording
       });
 
       print(
@@ -508,16 +518,19 @@ class _MenghafalScreenState extends State<MenghafalScreen>
         if (_showReward)
           RewardScreen(
             title: '🎉 Selamat!',
-            subtitle: 'Anda telah menghafal semua ayat dengan benar.\nTugas menghafal selesai!',
+            subtitle:
+                'Anda telah menghafal semua ayat dengan benar.\nTugas menghafal selesai!',
             onComplete: () {
               setState(() {
                 _showReward = false;
               });
-              
+
               // Return to previous screen with success result
               Future.delayed(const Duration(milliseconds: 300), () {
                 if (mounted) {
-                  Navigator.of(context).pop(true); // Return true to indicate completion
+                  Navigator.of(
+                    context,
+                  ).pop(true); // Return true to indicate completion
                 }
               });
             },
@@ -534,20 +547,19 @@ class _MenghafalScreenState extends State<MenghafalScreen>
         children: [
           GestureDetector(
             onTap: () => Navigator.of(context).pop(),
-            child: SvgPicture.asset(
-              'assets/exitsegmen.svg',
-              height: 35,
-              
-            ),
+            child: SvgPicture.asset('assets/exitsegmen.svg', height: 35),
           ),
-         
+
           Row(
             children: [
               // Developer button to complete memorization instantly
               GestureDetector(
                 onTap: _completeAllAyatsInstantly,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.orange.withOpacity(0.8),
                     borderRadius: BorderRadius.circular(12),
@@ -556,11 +568,7 @@ class _MenghafalScreenState extends State<MenghafalScreen>
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(
-                        Icons.flash_on,
-                        color: Colors.white,
-                        size: 16,
-                      ),
+                      Icon(Icons.flash_on, color: Colors.white, size: 16),
                       const SizedBox(width: 4),
                       Text(
                         'Selesai Instan',
@@ -590,10 +598,7 @@ class _MenghafalScreenState extends State<MenghafalScreen>
         Stack(
           alignment: Alignment.center,
           children: [
-            SvgPicture.asset(
-              'assets/suratbar.svg',
-              height: 60,
-            ),
+            SvgPicture.asset('assets/suratbar.svg', height: 60),
             Text(
               _surahDetail!['nama'] ?? 'Nama Surat',
               style: TextStyle(
@@ -601,14 +606,46 @@ class _MenghafalScreenState extends State<MenghafalScreen>
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
                 shadows: [
-                  Shadow(offset: Offset(-1.0, -1.0), blurRadius: 0.0, color: Colors.orange),
-                  Shadow(offset: Offset(1.0, -1.0), blurRadius: 0.0, color: Colors.orange),
-                  Shadow(offset: Offset(1.0, 1.0), blurRadius: 0.0, color: Colors.orange),
-                  Shadow(offset: Offset(-1.0, 1.0), blurRadius: 0.0, color: Colors.orange),
-                  Shadow(offset: Offset(-2.0, 0.0), blurRadius: 0.0, color: Colors.orange),
-                  Shadow(offset: Offset(2.0, 0.0), blurRadius: 0.0, color: Colors.orange),
-                  Shadow(offset: Offset(0.0, -2.0), blurRadius: 0.0, color: Colors.orange),
-                  Shadow(offset: Offset(0.0, 2.0), blurRadius: 0.0, color: Colors.orange),
+                  Shadow(
+                    offset: Offset(-1.0, -1.0),
+                    blurRadius: 0.0,
+                    color: Colors.orange,
+                  ),
+                  Shadow(
+                    offset: Offset(1.0, -1.0),
+                    blurRadius: 0.0,
+                    color: Colors.orange,
+                  ),
+                  Shadow(
+                    offset: Offset(1.0, 1.0),
+                    blurRadius: 0.0,
+                    color: Colors.orange,
+                  ),
+                  Shadow(
+                    offset: Offset(-1.0, 1.0),
+                    blurRadius: 0.0,
+                    color: Colors.orange,
+                  ),
+                  Shadow(
+                    offset: Offset(-2.0, 0.0),
+                    blurRadius: 0.0,
+                    color: Colors.orange,
+                  ),
+                  Shadow(
+                    offset: Offset(2.0, 0.0),
+                    blurRadius: 0.0,
+                    color: Colors.orange,
+                  ),
+                  Shadow(
+                    offset: Offset(0.0, -2.0),
+                    blurRadius: 0.0,
+                    color: Colors.orange,
+                  ),
+                  Shadow(
+                    offset: Offset(0.0, 2.0),
+                    blurRadius: 0.0,
+                    color: Colors.orange,
+                  ),
                 ],
               ),
             ),
@@ -622,10 +659,7 @@ class _MenghafalScreenState extends State<MenghafalScreen>
             Stack(
               alignment: Alignment.center,
               children: [
-                SvgPicture.asset(
-                  'assets/subsuratbar.svg',
-                  height: 35,
-                ),
+                SvgPicture.asset('assets/subsuratbar.svg', height: 35),
                 Text(
                   _surahDetail!['arti'] ?? 'Arti',
                   style: TextStyle(
@@ -633,14 +667,46 @@ class _MenghafalScreenState extends State<MenghafalScreen>
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
                     shadows: [
-                      Shadow(offset: Offset(-1.0, -1.0), blurRadius: 0.0, color: Colors.orange),
-                      Shadow(offset: Offset(1.0, -1.0), blurRadius: 0.0, color: Colors.orange),
-                      Shadow(offset: Offset(1.0, 1.0), blurRadius: 0.0, color: Colors.orange),
-                      Shadow(offset: Offset(-1.0, 1.0), blurRadius: 0.0, color: Colors.orange),
-                      Shadow(offset: Offset(-2.0, 0.0), blurRadius: 0.0, color: Colors.orange),
-                      Shadow(offset: Offset(2.0, 0.0), blurRadius: 0.0, color: Colors.orange),
-                      Shadow(offset: Offset(0.0, -2.0), blurRadius: 0.0, color: Colors.orange),
-                      Shadow(offset: Offset(0.0, 2.0), blurRadius: 0.0, color: Colors.orange),
+                      Shadow(
+                        offset: Offset(-1.0, -1.0),
+                        blurRadius: 0.0,
+                        color: Colors.orange,
+                      ),
+                      Shadow(
+                        offset: Offset(1.0, -1.0),
+                        blurRadius: 0.0,
+                        color: Colors.orange,
+                      ),
+                      Shadow(
+                        offset: Offset(1.0, 1.0),
+                        blurRadius: 0.0,
+                        color: Colors.orange,
+                      ),
+                      Shadow(
+                        offset: Offset(-1.0, 1.0),
+                        blurRadius: 0.0,
+                        color: Colors.orange,
+                      ),
+                      Shadow(
+                        offset: Offset(-2.0, 0.0),
+                        blurRadius: 0.0,
+                        color: Colors.orange,
+                      ),
+                      Shadow(
+                        offset: Offset(2.0, 0.0),
+                        blurRadius: 0.0,
+                        color: Colors.orange,
+                      ),
+                      Shadow(
+                        offset: Offset(0.0, -2.0),
+                        blurRadius: 0.0,
+                        color: Colors.orange,
+                      ),
+                      Shadow(
+                        offset: Offset(0.0, 2.0),
+                        blurRadius: 0.0,
+                        color: Colors.orange,
+                      ),
                     ],
                   ),
                 ),
@@ -650,10 +716,7 @@ class _MenghafalScreenState extends State<MenghafalScreen>
             Stack(
               alignment: Alignment.center,
               children: [
-                SvgPicture.asset(
-                  'assets/subsuratbar.svg',
-                  height: 35,
-                ),
+                SvgPicture.asset('assets/subsuratbar.svg', height: 35),
                 Text(
                   '${_surahDetail!['jumlah_ayat'] ?? 0} Ayat',
                   style: TextStyle(
@@ -661,14 +724,46 @@ class _MenghafalScreenState extends State<MenghafalScreen>
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
                     shadows: [
-                      Shadow(offset: Offset(-1.0, -1.0), blurRadius: 0.0, color: Colors.orange),
-                      Shadow(offset: Offset(1.0, -1.0), blurRadius: 0.0, color: Colors.orange),
-                      Shadow(offset: Offset(1.0, 1.0), blurRadius: 0.0, color: Colors.orange),
-                      Shadow(offset: Offset(-1.0, 1.0), blurRadius: 0.0, color: Colors.orange),
-                      Shadow(offset: Offset(-2.0, 0.0), blurRadius: 0.0, color: Colors.orange),
-                      Shadow(offset: Offset(2.0, 0.0), blurRadius: 0.0, color: Colors.orange),
-                      Shadow(offset: Offset(0.0, -2.0), blurRadius: 0.0, color: Colors.orange),
-                      Shadow(offset: Offset(0.0, 2.0), blurRadius: 0.0, color: Colors.orange),
+                      Shadow(
+                        offset: Offset(-1.0, -1.0),
+                        blurRadius: 0.0,
+                        color: Colors.orange,
+                      ),
+                      Shadow(
+                        offset: Offset(1.0, -1.0),
+                        blurRadius: 0.0,
+                        color: Colors.orange,
+                      ),
+                      Shadow(
+                        offset: Offset(1.0, 1.0),
+                        blurRadius: 0.0,
+                        color: Colors.orange,
+                      ),
+                      Shadow(
+                        offset: Offset(-1.0, 1.0),
+                        blurRadius: 0.0,
+                        color: Colors.orange,
+                      ),
+                      Shadow(
+                        offset: Offset(-2.0, 0.0),
+                        blurRadius: 0.0,
+                        color: Colors.orange,
+                      ),
+                      Shadow(
+                        offset: Offset(2.0, 0.0),
+                        blurRadius: 0.0,
+                        color: Colors.orange,
+                      ),
+                      Shadow(
+                        offset: Offset(0.0, -2.0),
+                        blurRadius: 0.0,
+                        color: Colors.orange,
+                      ),
+                      Shadow(
+                        offset: Offset(0.0, 2.0),
+                        blurRadius: 0.0,
+                        color: Colors.orange,
+                      ),
                     ],
                   ),
                 ),
@@ -680,10 +775,9 @@ class _MenghafalScreenState extends State<MenghafalScreen>
     );
   }
 
-
   Widget _buildAyahCard(Map<String, dynamic> ayat) {
     final isRevealed = _revealedAyats.contains(_currentAyatIndex);
-    
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -726,11 +820,7 @@ class _MenghafalScreenState extends State<MenghafalScreen>
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(
-                    Icons.mic_rounded,
-                    size: 48,
-                    color: Colors.grey[400],
-                  ),
+                  Icon(Icons.mic_rounded, size: 48, color: Colors.grey[400]),
                   const SizedBox(height: 16),
                   Text(
                     'Mulai hafalan dengan merekam ayat ini',
@@ -761,7 +851,7 @@ class _MenghafalScreenState extends State<MenghafalScreen>
 
   Widget _buildRecordingSection() {
     final isRevealed = _revealedAyats.contains(_currentAyatIndex);
-    
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -784,10 +874,7 @@ class _MenghafalScreenState extends State<MenghafalScreen>
             Text(
               'Hafalkan ayat ini terlebih dahulu, lalu rekam untuk melihat teksnya',
               textAlign: TextAlign.center,
-              style: TextStyle(
-                color: Colors.white70,
-                fontSize: 14,
-              ),
+              style: TextStyle(color: Colors.white70, fontSize: 14),
             ),
           ],
           // Progress indicator for memorization
@@ -863,7 +950,7 @@ class _MenghafalScreenState extends State<MenghafalScreen>
 
   Widget _buildResultSection() {
     final isCorrect = _pronunciationScore >= 80;
-    
+
     return AnimatedBuilder(
       animation: _pulseAnimation,
       builder: (context, child) {
@@ -872,7 +959,9 @@ class _MenghafalScreenState extends State<MenghafalScreen>
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
             decoration: BoxDecoration(
-              color: isCorrect ? const Color(0xFF4CAF50) : const Color(0xFFE53935),
+              color: isCorrect
+                  ? const Color(0xFF4CAF50)
+                  : const Color(0xFFE53935),
               borderRadius: BorderRadius.circular(16),
             ),
             child: Row(
@@ -903,7 +992,8 @@ class _MenghafalScreenState extends State<MenghafalScreen>
 
   Widget _buildNavigation(Map<String, dynamic> ayat) {
     final isCurrentAyatCorrect = _correctAyats.contains(_currentAyatIndex);
-    final canGoNext = isCurrentAyatCorrect && _currentAyatIndex < _ayatList.length - 1;
+    final canGoNext =
+        isCurrentAyatCorrect && _currentAyatIndex < _ayatList.length - 1;
     final canGoPrev = _currentAyatIndex > 0;
 
     return Padding(
@@ -915,10 +1005,7 @@ class _MenghafalScreenState extends State<MenghafalScreen>
             onTap: canGoPrev ? _previousAyat : null,
             child: Opacity(
               opacity: canGoPrev ? 1.0 : 0.5,
-              child: SvgPicture.asset(
-                'assets/prevayat.svg',
-                height: 55,
-              ),
+              child: SvgPicture.asset('assets/prevayat.svg', height: 55),
             ),
           ),
           Column(
@@ -930,14 +1017,46 @@ class _MenghafalScreenState extends State<MenghafalScreen>
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
                   shadows: [
-                    Shadow(offset: Offset(-1.0, -1.0), blurRadius: 0.0, color: Colors.orange),
-                    Shadow(offset: Offset(1.0, -1.0), blurRadius: 0.0, color: Colors.orange),
-                    Shadow(offset: Offset(1.0, 1.0), blurRadius: 0.0, color: Colors.orange),
-                    Shadow(offset: Offset(-1.0, 1.0), blurRadius: 0.0, color: Colors.orange),
-                    Shadow(offset: Offset(-2.0, 0.0), blurRadius: 0.0, color: Colors.orange),
-                    Shadow(offset: Offset(2.0, 0.0), blurRadius: 0.0, color: Colors.orange),
-                    Shadow(offset: Offset(0.0, -2.0), blurRadius: 0.0, color: Colors.orange),
-                    Shadow(offset: Offset(0.0, 2.0), blurRadius: 0.0, color: Colors.orange),
+                    Shadow(
+                      offset: Offset(-1.0, -1.0),
+                      blurRadius: 0.0,
+                      color: Colors.orange,
+                    ),
+                    Shadow(
+                      offset: Offset(1.0, -1.0),
+                      blurRadius: 0.0,
+                      color: Colors.orange,
+                    ),
+                    Shadow(
+                      offset: Offset(1.0, 1.0),
+                      blurRadius: 0.0,
+                      color: Colors.orange,
+                    ),
+                    Shadow(
+                      offset: Offset(-1.0, 1.0),
+                      blurRadius: 0.0,
+                      color: Colors.orange,
+                    ),
+                    Shadow(
+                      offset: Offset(-2.0, 0.0),
+                      blurRadius: 0.0,
+                      color: Colors.orange,
+                    ),
+                    Shadow(
+                      offset: Offset(2.0, 0.0),
+                      blurRadius: 0.0,
+                      color: Colors.orange,
+                    ),
+                    Shadow(
+                      offset: Offset(0.0, -2.0),
+                      blurRadius: 0.0,
+                      color: Colors.orange,
+                    ),
+                    Shadow(
+                      offset: Offset(0.0, 2.0),
+                      blurRadius: 0.0,
+                      color: Colors.orange,
+                    ),
                   ],
                 ),
               ),
@@ -945,7 +1064,10 @@ class _MenghafalScreenState extends State<MenghafalScreen>
               if (isCurrentAyatCorrect)
                 Container(
                   margin: const EdgeInsets.only(top: 4),
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 2,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.green.withOpacity(0.8),
                     borderRadius: BorderRadius.circular(10),
@@ -962,7 +1084,10 @@ class _MenghafalScreenState extends State<MenghafalScreen>
               else
                 Container(
                   margin: const EdgeInsets.only(top: 4),
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 2,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.red.withOpacity(0.8),
                     borderRadius: BorderRadius.circular(10),
@@ -982,10 +1107,7 @@ class _MenghafalScreenState extends State<MenghafalScreen>
             onTap: canGoNext ? _nextAyat : null,
             child: Opacity(
               opacity: canGoNext ? 1.0 : 0.5,
-              child: SvgPicture.asset(
-                'assets/nexyatat.svg',
-                height: 55,
-              ),
+              child: SvgPicture.asset('assets/nexyatat.svg', height: 55),
             ),
           ),
         ],
@@ -993,5 +1115,3 @@ class _MenghafalScreenState extends State<MenghafalScreen>
     );
   }
 }
-
-
